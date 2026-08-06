@@ -19,7 +19,10 @@ export const bookingsTable = pgTable("bookings", {
   peopleCount: integer("people_count").notNull(),
   pricePerPerson: integer("price_per_person").notNull(),
   totalPrice: integer("total_price").notNull(),
-  status: text("status").notNull().default("confirmed"), // confirmed | cancelled
+  status: text("status").notNull().default("confirmed"), // confirmed | cancelled | pending_payment
+  paymentStatus: text("payment_status"), // null | pending | paid
+  whopCheckoutId: text("whop_checkout_id"), // Whop checkout configuration ID
+  paymentExpiresAt: timestamp("payment_expires_at", { withTimezone: true }), // when unpaid booking auto-cancels
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

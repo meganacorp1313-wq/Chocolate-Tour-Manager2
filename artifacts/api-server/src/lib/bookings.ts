@@ -1,8 +1,8 @@
-import { inArray, and, eq, sum } from "drizzle-orm";
+import { inArray, and, eq, sum, lt, or } from "drizzle-orm";
 import { db, bookingsTable, slotsTable, toursTable } from "@workspace/db";
 import type { Booking, Slot, Tour } from "@workspace/db";
 
-/** Sum of confirmed seats per slot id. */
+/** Sum of confirmed + pending_payment seats per slot id (both hold a place). */
 export async function bookedSeatsBySlot(
   slotIds: number[],
 ): Promise<Map<number, number>> {
@@ -17,7 +17,10 @@ export async function bookedSeatsBySlot(
     .where(
       and(
         inArray(bookingsTable.slotId, slotIds),
-        eq(bookingsTable.status, "confirmed"),
+        or(
+          eq(bookingsTable.status, "confirmed"),
+          eq(bookingsTable.status, "pending_payment"),
+        ),
       ),
     )
     .groupBy(bookingsTable.slotId);
@@ -25,6 +28,22 @@ export async function bookedSeatsBySlot(
     map.set(row.slotId, Number(row.seats ?? 0));
   }
   return map;
+}
+
+/** Cancel retail bookings whose payment window has expired. Returns count. */
+export async function expireStaleBookings(): Promise<number> {
+  const now = new Date();
+  const expired = await db
+    .update(bookingsTable)
+    .set({ status: "cancelled", paymentStatus: null })
+    .where(
+      and(
+        eq(bookingsTable.status, "pending_payment"),
+        lt(bookingsTable.paymentExpiresAt, now),
+      ),
+    )
+    .returning({ id: bookingsTable.id });
+  return expired.length;
 }
 
 export function generateBookingCode(): string {
@@ -50,6 +69,8 @@ export interface BookingView {
   pricePerPerson: number;
   totalPrice: number;
   status: string;
+  paymentStatus: string | null;
+  checkoutUrl: string | null;
   companyId: number | null;
   companyName: string | null;
   comment: string | null;
@@ -61,6 +82,7 @@ export function toBookingView(
   slot: Slot,
   tour: Tour,
   companyName: string | null,
+  checkoutUrl?: string | null,
 ): BookingView {
   return {
     id: booking.id,
@@ -76,6 +98,8 @@ export function toBookingView(
     pricePerPerson: booking.pricePerPerson,
     totalPrice: booking.totalPrice,
     status: booking.status,
+    paymentStatus: booking.paymentStatus ?? null,
+    checkoutUrl: checkoutUrl ?? null,
     companyId: booking.companyId,
     companyName,
     comment: booking.comment,

@@ -74,9 +74,6 @@ export const ListSlotsResponse = zod.array(ListSlotsResponseItem)
  */
 
 
-
-
-
 export const CreateBookingBody = zod.object({
   "slotId": zod.number().int(),
   "customerName": zod.string().min(1),
@@ -99,7 +96,9 @@ export const CreateBookingResponse = zod.object({
   "peopleCount": zod.number().int(),
   "pricePerPerson": zod.number().int(),
   "totalPrice": zod.number().int(),
-  "status": zod.enum(['confirmed', 'cancelled']),
+  "status": zod.enum(['confirmed', 'cancelled', 'pending_payment']),
+  "paymentStatus": zod.union([zod.literal('pending'),zod.literal('paid'),zod.literal(null)]).nullish().describe('null = no online payment (company booking); pending = awaiting payment; paid = paid online'),
+  "checkoutUrl": zod.string().nullish().describe('Whop hosted checkout URL, present only on fresh retail bookings'),
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
@@ -127,7 +126,9 @@ export const GetBookingByCodeResponse = zod.object({
   "peopleCount": zod.number().int(),
   "pricePerPerson": zod.number().int(),
   "totalPrice": zod.number().int(),
-  "status": zod.enum(['confirmed', 'cancelled']),
+  "status": zod.enum(['confirmed', 'cancelled', 'pending_payment']),
+  "paymentStatus": zod.union([zod.literal('pending'),zod.literal('paid'),zod.literal(null)]).nullish().describe('null = no online payment (company booking); pending = awaiting payment; paid = paid online'),
+  "checkoutUrl": zod.string().nullish().describe('Whop hosted checkout URL, present only on fresh retail bookings'),
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
@@ -138,7 +139,6 @@ export const GetBookingByCodeResponse = zod.object({
 /**
  * @summary Company login with company password
  */
-
 
 
 export const CompanyLoginBody = zod.object({
@@ -196,7 +196,9 @@ export const GetCompanyBookingsResponseItem = zod.object({
   "peopleCount": zod.number().int(),
   "pricePerPerson": zod.number().int(),
   "totalPrice": zod.number().int(),
-  "status": zod.enum(['confirmed', 'cancelled']),
+  "status": zod.enum(['confirmed', 'cancelled', 'pending_payment']),
+  "paymentStatus": zod.union([zod.literal('pending'),zod.literal('paid'),zod.literal(null)]).nullish().describe('null = no online payment (company booking); pending = awaiting payment; paid = paid online'),
+  "checkoutUrl": zod.string().nullish().describe('Whop hosted checkout URL, present only on fresh retail bookings'),
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
@@ -208,7 +210,6 @@ export const GetCompanyBookingsResponse = zod.array(GetCompanyBookingsResponseIt
 /**
  * @summary Admin login
  */
-
 
 
 export const AdminLoginBody = zod.object({
@@ -273,7 +274,6 @@ export const AdminListToursResponse = zod.array(AdminListToursResponseItem)
 export const createTourBodyBasePriceMin = 0;
 
 
-
 export const CreateTourBody = zod.object({
   "name": zod.string().min(1),
   "description": zod.string(),
@@ -303,9 +303,7 @@ export const UpdateTourParams = zod.object({
 })
 
 
-
 export const updateTourBodyBasePriceMin = 0;
-
 
 
 export const UpdateTourBody = zod.object({
@@ -368,7 +366,6 @@ export const AdminListSlotsResponse = zod.array(AdminListSlotsResponseItem)
  */
 
 
-
 export const CreateSlotBody = zod.object({
   "tourId": zod.number().int(),
   "date": zod.string(),
@@ -396,8 +393,6 @@ export const createSlotsBulkBodyWeekdaysItemMin = 0;
 export const createSlotsBulkBodyWeekdaysItemMax = 6;
 
 
-
-
 export const CreateSlotsBulkBody = zod.object({
   "tourId": zod.number().int(),
   "dateFrom": zod.string().describe('YYYY-MM-DD'),
@@ -418,8 +413,6 @@ export const CreateSlotsBulkResponse = zod.object({
 export const UpdateSlotParams = zod.object({
   "id": zod.coerce.number().int()
 })
-
-
 
 
 export const UpdateSlotBody = zod.object({
@@ -474,7 +467,6 @@ export const AdminListCompaniesResponse = zod.array(AdminListCompaniesResponseIt
 export const createCompanyBodyPasswordMin = 4;
 
 
-
 export const CreateCompanyBody = zod.object({
   "name": zod.string().min(1),
   "contactEmail": zod.string().nullish(),
@@ -501,7 +493,6 @@ export const UpdateCompanyParams = zod.object({
 
 
 export const updateCompanyBodyPasswordMin = 4;
-
 
 
 export const UpdateCompanyBody = zod.object({
@@ -559,7 +550,6 @@ export const SetCompanyPriceListParams = zod.object({
 export const setCompanyPriceListBodyItemsItemPriceMin = 0;
 
 
-
 export const SetCompanyPriceListBody = zod.object({
   "items": zod.array(zod.object({
   "tourId": zod.number().int(),
@@ -581,7 +571,6 @@ export const SetCompanyPriceListResponse = zod.array(SetCompanyPriceListResponse
  */
 
 export const changeAdminPasswordBodyNewPasswordMin = 6;
-
 
 
 export const ChangeAdminPasswordBody = zod.object({
@@ -615,7 +604,9 @@ export const AdminListBookingsResponseItem = zod.object({
   "peopleCount": zod.number().int(),
   "pricePerPerson": zod.number().int(),
   "totalPrice": zod.number().int(),
-  "status": zod.enum(['confirmed', 'cancelled']),
+  "status": zod.enum(['confirmed', 'cancelled', 'pending_payment']),
+  "paymentStatus": zod.union([zod.literal('pending'),zod.literal('paid'),zod.literal(null)]).nullish().describe('null = no online payment (company booking); pending = awaiting payment; paid = paid online'),
+  "checkoutUrl": zod.string().nullish().describe('Whop hosted checkout URL, present only on fresh retail bookings'),
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
@@ -623,7 +614,12 @@ export const AdminListBookingsResponseItem = zod.object({
 })
 export const AdminListBookingsResponse = zod.array(AdminListBookingsResponseItem)
 
-
+/**
+ * @summary Cancel retail bookings whose payment window has expired
+ */
+export const ExpireUnpaidBookingsResponse = zod.object({
+  "cancelled": zod.number().int()
+})
 /**
  * @summary Update booking status
  */
@@ -632,7 +628,7 @@ export const UpdateBookingStatusParams = zod.object({
 })
 
 export const UpdateBookingStatusBody = zod.object({
-  "status": zod.enum(['confirmed', 'cancelled'])
+  "status": zod.enum(['confirmed', 'cancelled', 'pending_payment'])
 })
 
 export const UpdateBookingStatusResponse = zod.object({
@@ -648,11 +644,12 @@ export const UpdateBookingStatusResponse = zod.object({
   "peopleCount": zod.number().int(),
   "pricePerPerson": zod.number().int(),
   "totalPrice": zod.number().int(),
-  "status": zod.enum(['confirmed', 'cancelled']),
+  "status": zod.enum(['confirmed', 'cancelled', 'pending_payment']),
+  "paymentStatus": zod.union([zod.literal('pending'),zod.literal('paid'),zod.literal(null)]).nullish().describe('null = no online payment (company booking); pending = awaiting payment; paid = paid online'),
+  "checkoutUrl": zod.string().nullish().describe('Whop hosted checkout URL, present only on fresh retail bookings'),
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
   "createdAt": zod.string()
 })
-
 

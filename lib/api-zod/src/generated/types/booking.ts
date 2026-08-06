@@ -5,6 +5,7 @@
  * Chocolate factory tours booking API
  * OpenAPI spec version: 0.1.0
  */
+import type { BookingPaymentStatus } from './bookingPaymentStatus';
 import type { BookingStatus } from './bookingStatus';
 
 export interface Booking {
@@ -23,6 +24,16 @@ export interface Booking {
   pricePerPerson: number;
   totalPrice: number;
   status: BookingStatus;
+  /**
+     * null = no online payment (company booking); pending = awaiting payment; paid = paid online
+     * @nullable
+     */
+  paymentStatus?: BookingPaymentStatus;
+  /**
+     * Whop hosted checkout URL, present only on fresh retail bookings
+     * @nullable
+     */
+  checkoutUrl?: string | null;
   /** @nullable */
   companyId?: number | null;
   /** @nullable */

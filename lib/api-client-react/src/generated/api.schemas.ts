@@ -139,8 +139,14 @@ export type BookingStatus = typeof BookingStatus[keyof typeof BookingStatus];
 export const BookingStatus = {
   confirmed: 'confirmed',
   cancelled: 'cancelled',
+  pending_payment: 'pending_payment',
 } as const;
 
+/**
+ * null = no online payment (company booking); pending = awaiting payment; paid = paid online
+ * @nullable
+ */
+export type BookingPaymentStatus = typeof BookingPaymentStatus[keyof typeof BookingPaymentStatus] | null;
 export interface Booking {
   id: number;
   /** Confirmation code */
@@ -157,6 +163,16 @@ export interface Booking {
   pricePerPerson: number;
   totalPrice: number;
   status: BookingStatus;
+  /**
+     * null = no online payment (company booking); pending = awaiting payment; paid = paid online
+     * @nullable
+     */
+  paymentStatus?: BookingPaymentStatus;
+  /**
+     * Whop hosted checkout URL, present only on fresh retail bookings
+     * @nullable
+     */
+  checkoutUrl?: string | null;
   /** @nullable */
   companyId?: number | null;
   /** @nullable */
@@ -172,6 +188,7 @@ export type BookingStatusUpdateStatus = typeof BookingStatusUpdateStatus[keyof t
 export const BookingStatusUpdateStatus = {
   confirmed: 'confirmed',
   cancelled: 'cancelled',
+  pending_payment: 'pending_payment',
 } as const;
 
 export interface BookingStatusUpdate {
@@ -293,3 +310,12 @@ from?: string;
 to?: string;
 };
 
+export type ExpireUnpaidBookings200 = {
+  cancelled: number;
+};
+
+
+export const BookingPaymentStatus = {
+  pending: 'pending',
+  paid: 'paid',
+} as const;

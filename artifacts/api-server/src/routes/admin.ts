@@ -60,6 +60,7 @@ import {
   UpdateBookingStatusResponse,
   ChangeAdminPasswordBody,
   ChangeAdminPasswordResponse,
+  ExpireUnpaidBookingsResponse,
 } from "@workspace/api-zod";
 import {
   readSession,
@@ -67,7 +68,11 @@ import {
   clearSession,
   ADMIN_COOKIE,
 } from "../lib/session";
-import { bookedSeatsBySlot, fetchBookingViews } from "../lib/bookings";
+import {
+  bookedSeatsBySlot,
+  fetchBookingViews,
+  expireStaleBookings,
+} from "../lib/bookings";
 import { hashPassword, verifyPassword, isHashedPassword } from "../lib/password";
 
 const router: IRouter = Router();
@@ -675,5 +680,11 @@ router.patch(
     res.json(UpdateBookingStatusResponse.parse(view));
   },
 );
+
+// Expire unpaid bookings past their payment window
+router.post("/admin/bookings/expire", requireAdmin, async (_req, res): Promise<void> => {
+  const cancelled = await expireStaleBookings();
+  res.json(ExpireUnpaidBookingsResponse.parse({ cancelled }));
+});
 
 export default router;

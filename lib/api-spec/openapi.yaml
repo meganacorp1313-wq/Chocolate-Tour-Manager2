@@ -629,6 +629,21 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Booking"
+  /admin/bookings/expire:
+    post:
+      operationId: expireUnpaidBookings
+      tags: [admin]
+      summary: Cancel retail bookings whose payment window has expired
+      responses:
+        "200":
+          description: Number of bookings cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [cancelled]
+                properties:
+                  cancelled: { type: integer }
   /admin/bookings/{id}:
     patch:
       operationId: updateBookingStatus
@@ -782,7 +797,9 @@ components:
         peopleCount: { type: integer }
         pricePerPerson: { type: integer }
         totalPrice: { type: integer }
-        status: { type: string, enum: [confirmed, cancelled] }
+        status: { type: string, enum: [confirmed, cancelled, pending_payment] }
+        paymentStatus: { type: ["string", "null"], enum: [pending, paid, null], description: "null = no online payment (company booking); pending = awaiting payment; paid = paid online" }
+        checkoutUrl: { type: ["string", "null"], description: "Whop hosted checkout URL, present only on fresh retail bookings" }
         companyId: { type: ["integer", "null"] }
         companyName: { type: ["string", "null"] }
         comment: { type: ["string", "null"] }
@@ -791,7 +808,7 @@ components:
       type: object
       required: [status]
       properties:
-        status: { type: string, enum: [confirmed, cancelled] }
+        status: { type: string, enum: [confirmed, cancelled, pending_payment] }
     CompanyLoginInput:
       type: object
       required: [password]

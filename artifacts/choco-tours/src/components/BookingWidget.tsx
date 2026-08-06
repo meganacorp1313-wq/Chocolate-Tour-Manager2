@@ -56,6 +56,9 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
         
         if (asPartner) {
           setLocation("/partner")
+        } else if (res.checkoutUrl) {
+          // Retail booking — redirect to Whop hosted checkout
+          window.location.href = res.checkoutUrl
         } else {
           setLocation(`/booking/${res.code}`)
         }
@@ -195,7 +198,7 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
               <Button type="button" variant="outline" onClick={() => setSelectedSlot(null)}>Отмена</Button>
               <Button type="submit" disabled={createBooking.isPending}>
                 {createBooking.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Забронировать
+                {asPartner ? "Забронировать" : "Забронировать и оплатить"}
               </Button>
             </div>
           </form>

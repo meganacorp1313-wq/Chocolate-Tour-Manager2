@@ -1,11 +1,11 @@
 import { useState } from "react"
-import { useAdminListBookings, useUpdateBookingStatus, getAdminListBookingsQueryKey } from "@workspace/api-client-react"
+import { useAdminListBookings, useUpdateBookingStatus, useExpireUnpaidBookings, getAdminListBookingsQueryKey } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Card } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Search, CheckCircle2, XCircle } from "lucide-react"
+import { Loader2, CheckCircle2, XCircle, CreditCard, Clock } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { ru } from "date-fns/locale"
 
@@ -18,18 +18,26 @@ export default function AdminBookings() {
     to: dateTo || undefined
   }
 
-  const { data: bookings, isLoading } = useAdminListBookings(params)
+  const { data: bookings, isLoading, refetch } = useAdminListBookings(params)
   const updateStatus = useUpdateBookingStatus()
+  const expireUnpaid = useExpireUnpaidBookings()
   const queryClient = useQueryClient()
 
   const handleStatus = (id: number, status: 'confirmed' | 'cancelled') => {
     updateStatus.mutate({ id, data: { status } }, {
       onSuccess: () => {
-        // Patch locally
         queryClient.setQueryData(getAdminListBookingsQueryKey(params), (old: any) => {
           if (!old) return old
           return old.map((b: any) => b.id === id ? { ...b, status } : b)
         })
+      }
+    })
+  }
+
+  const handleExpire = () => {
+    expireUnpaid.mutate(undefined, {
+      onSuccess: (res) => {
+        if (res.cancelled > 0) refetch()
       }
     })
   }
@@ -41,6 +49,16 @@ export default function AdminBookings() {
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary mb-1 sm:mb-2">Бронирования</h1>
           <p className="text-muted-foreground text-sm sm:text-base">Управление записями гостей</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExpire}
+          disabled={expireUnpaid.isPending}
+          title="Отменить неоплаченные брони с истёкшим сроком"
+        >
+          {expireUnpaid.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Clock className="w-4 h-4 mr-2" />}
+          Отменить просроченные
+        </Button>
       </div>
 
       <Card className="p-4 flex flex-col sm:flex-row gap-4 items-end bg-card shadow-sm">
@@ -73,6 +91,7 @@ export default function AdminBookings() {
                 <TableHead>Источник</TableHead>
                 <TableHead>Сумма</TableHead>
                 <TableHead>Статус</TableHead>
+                <TableHead>Оплата</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -100,10 +119,27 @@ export default function AdminBookings() {
                   <TableCell className="font-medium">{b.totalPrice} ₽</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      b.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      b.status === 'confirmed'
+                        ? 'bg-green-100 text-green-700'
+                        : b.status === 'pending_payment'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700'
                     }`}>
-                      {b.status === 'confirmed' ? 'Подтверждено' : 'Отменено'}
+                      {b.status === 'confirmed' ? 'Подтверждено' : b.status === 'pending_payment' ? 'Ожидает оплаты' : 'Отменено'}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    {b.paymentStatus === 'paid' ? (
+                      <span className="flex items-center gap-1 text-xs text-green-700 font-medium">
+                        <CreditCard className="w-3.5 h-3.5" /> Оплачено
+                      </span>
+                    ) : b.paymentStatus === 'pending' ? (
+                      <span className="flex items-center gap-1 text-xs text-yellow-600 font-medium">
+                        <Clock className="w-3.5 h-3.5" /> Ожидание
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">

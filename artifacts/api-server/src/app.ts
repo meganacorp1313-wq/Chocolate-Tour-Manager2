@@ -28,6 +28,25 @@ app.use(
 );
 app.use(cors());
 app.use(cookieParser());
+
+// For the Whop webhook route, capture raw body before JSON parsing so we can
+// verify the HMAC-SHA256 signature that Whop attaches to each request.
+app.use(
+  "/api/whop/webhook",
+  express.raw({ type: "application/json" }),
+  (req, _res, next) => {
+    // Attach rawBody to request for signature verification in the handler.
+    (req as express.Request & { rawBody: Buffer }).rawBody = req.body as Buffer;
+    // Re-parse as JSON so route handlers can use req.body as an object.
+    try {
+      req.body = JSON.parse((req.body as Buffer).toString("utf8"));
+    } catch {
+      req.body = {};
+    }
+    next();
+  },
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
