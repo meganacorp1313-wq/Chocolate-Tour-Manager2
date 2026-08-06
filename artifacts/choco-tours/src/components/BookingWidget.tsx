@@ -2,7 +2,6 @@ import { useState } from "react"
 import { useGetAvailability, useListSlots, useCreateBooking, getListSlotsQueryKey, getGetAvailabilityQueryKey } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { format, parseISO, startOfMonth, endOfMonth, isBefore, startOfDay, addDays } from "date-fns"
-import { ru } from "date-fns/locale"
 import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useLocation } from "wouter"
 import { Loader2 } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
 
 export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
   const [date, setDate] = useState<Date>(new Date())
@@ -27,6 +27,7 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
 
   const [, setLocation] = useLocation()
   const queryClient = useQueryClient()
+  const { t, dateLocale, lang } = useI18n()
   
   const monthStr = format(month, 'yyyy-MM')
   const dateStr = format(date, 'yyyy-MM-dd')
@@ -54,11 +55,10 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
         queryClient.invalidateQueries({ queryKey: getListSlotsQueryKey({ date: dateStr }) })
         queryClient.invalidateQueries({ queryKey: getGetAvailabilityQueryKey({ month: monthStr }) })
         
-        if (asPartner) {
+        if (res.checkoutUrl) {
+          window.location.href = res.checkoutUrl;
+        } else if (asPartner) {
           setLocation("/partner")
-        } else if (res.checkoutUrl) {
-          // Retail booking — redirect to Whop hosted checkout
-          window.location.href = res.checkoutUrl
         } else {
           setLocation(`/booking/${res.code}`)
         }
@@ -77,11 +77,17 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
     return false
   }
 
+  const getTourName = (slot: any) => {
+    if (lang === 'es' && slot.tourNameEs) return slot.tourNameEs;
+    if (lang === 'en' && slot.tourNameEn) return slot.tourNameEn;
+    return slot.tourName;
+  }
+
   return (
     <div className="bg-card border rounded-xl shadow-lg p-4 sm:p-6 flex flex-col md:flex-row gap-6 sm:gap-8">
       {/* Calendar Side */}
       <div className="flex-1 overflow-x-auto pb-2">
-        <h3 className="text-lg sm:text-xl font-serif font-semibold mb-4 text-primary">Выберите дату</h3>
+        <h3 className="text-lg sm:text-xl font-serif font-semibold mb-4 text-primary">{t("select_date")}</h3>
         <div className="border rounded-lg p-1 sm:p-2 bg-background inline-block min-w-min">
           <Calendar
             mode="single"
@@ -90,7 +96,7 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
             onMonthChange={setMonth}
             month={month}
             disabled={isDayDisabled}
-            locale={ru}
+            locale={dateLocale}
           />
         </div>
       </div>
@@ -98,7 +104,7 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
       {/* Slots Side */}
       <div className="flex-1 flex flex-col min-w-0 w-full">
         <h3 className="text-lg sm:text-xl font-serif font-semibold mb-4 text-primary">
-          Время на {format(date, 'd MMMM', { locale: ru })}
+          {t("time_for")} {format(date, 'd MMMM', { locale: dateLocale })}
         </h3>
         
         {loadingSlots ? (
@@ -106,7 +112,7 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
             <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
           </div>
         ) : slots?.length === 0 ? (
-          <p className="text-muted-foreground">На эту дату нет доступных экскурсий.</p>
+          <p className="text-muted-foreground">{t("no_slots")}</p>
         ) : (
           <div className="grid grid-cols-1 gap-3 overflow-y-auto max-h-[400px] pr-2">
             {slots?.map(slot => (
@@ -126,10 +132,10 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-bold text-lg">{slot.startTime}</span>
                   <span className="text-sm px-2 py-1 bg-secondary rounded text-secondary-foreground font-medium">
-                    Осталось мест: {slot.availableSeats}
+                    {t("remaining_seats")} {slot.availableSeats}
                   </span>
                 </div>
-                <h4 className="font-medium">{slot.tourName}</h4>
+                <h4 className="font-medium">{getTourName(slot)}</h4>
               </div>
             ))}
           </div>
@@ -139,14 +145,14 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
       <Dialog open={!!selectedSlot} onOpenChange={(open) => !open && setSelectedSlot(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="font-serif text-2xl text-primary">Оформление бронирования</DialogTitle>
+            <DialogTitle className="font-serif text-2xl text-primary">{t("booking_checkout")}</DialogTitle>
             <DialogDescription>
-              {selectedSlot?.tourName} • {format(date, 'd MMMM', { locale: ru })} в {selectedSlot?.startTime}
+              {selectedSlot ? getTourName(selectedSlot) : ""} • {format(date, 'd MMMM', { locale: dateLocale })} — {selectedSlot?.startTime}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleBooking} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Имя {asPartner ? "клиента" : ""}</Label>
+              <Label htmlFor="name">{asPartner ? t("form_client_name") : t("form_name")}</Label>
               <Input 
                 id="name" 
                 required 
@@ -155,7 +161,7 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Телефон</Label>
+              <Label htmlFor="phone">{t("form_phone")}</Label>
               <Input 
                 id="phone" 
                 type="tel" 
@@ -165,7 +171,7 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email (необязательно)</Label>
+              <Label htmlFor="email">{t("form_email")}</Label>
               <Input 
                 id="email" 
                 type="email" 
@@ -174,7 +180,7 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="people">Количество человек</Label>
+              <Label htmlFor="people">{t("form_people")}</Label>
               <Input 
                 id="people" 
                 type="number" 
@@ -186,7 +192,7 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="comment">Комментарий (необязательно)</Label>
+              <Label htmlFor="comment">{t("form_comment")}</Label>
               <Textarea 
                 id="comment" 
                 value={bookingForm.comment}
@@ -195,10 +201,10 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
             </div>
             
             <div className="pt-4 flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setSelectedSlot(null)}>Отмена</Button>
+              <Button type="button" variant="outline" onClick={() => setSelectedSlot(null)}>{t("cancel")}</Button>
               <Button type="submit" disabled={createBooking.isPending}>
                 {createBooking.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                {asPartner ? "Забронировать" : "Забронировать и оплатить"}
+                {t("book_btn")}
               </Button>
             </div>
           </form>

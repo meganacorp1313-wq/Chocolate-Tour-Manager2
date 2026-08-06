@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Loader2, Plus, Pencil, Trash2, KeyRound, Banknote } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
 
 export default function AdminCompanies() {
   const queryClient = useQueryClient()
   const { data: companies, isLoading } = useAdminListCompanies()
+  const { t } = useI18n()
   
   const createCompany = useCreateCompany()
   const updateCompany = useUpdateCompany()
@@ -60,7 +62,7 @@ export default function AdminCompanies() {
   }
 
   const handleDelete = (id: number) => {
-    if (confirm("Вы уверены? Удаление компании безвозвратно.")) {
+    if (confirm(t("confirm_delete"))) {
       deleteCompany.mutate({ id }, {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: getAdminListCompaniesQueryKey() })
       })
@@ -71,10 +73,10 @@ export default function AdminCompanies() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary mb-1 sm:mb-2">Компании-партнеры</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">Управление B2B партнерами и их скидками</p>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary mb-1 sm:mb-2">{t("companies_title")}</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">{t("companies_desc")}</p>
         </div>
-        <Button onClick={handleCreate} className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2"/> Добавить партнера</Button>
+        <Button onClick={handleCreate} className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2"/> {t("add_partner")}</Button>
       </div>
 
       <Card>
@@ -84,10 +86,10 @@ export default function AdminCompanies() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Название</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Пароль</TableHead>
-                <TableHead>Статус</TableHead>
+                <TableHead>{t("col_name")}</TableHead>
+                <TableHead>{t("col_email")}</TableHead>
+                <TableHead>{t("col_password")}</TableHead>
+                <TableHead>{t("col_status")}</TableHead>
                 <TableHead className="w-[180px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -98,11 +100,11 @@ export default function AdminCompanies() {
                   <TableCell>{c.contactEmail || "—"}</TableCell>
                   <TableCell className="font-mono text-muted-foreground text-xs">{c.password}</TableCell>
                   <TableCell>
-                    {c.active ? <span className="text-green-600 font-medium">Активен</span> : <span className="text-muted-foreground">Заблокирован</span>}
+                    {c.active ? <span className="text-green-600 font-medium">{t("active")}</span> : <span className="text-muted-foreground">{t("blocked")}</span>}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" title="Прайс-лист" onClick={() => setPricingCompany(c.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => setPricingCompany(c.id)}>
                         <Banknote className="w-4 h-4 text-accent" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(c)}>
@@ -124,28 +126,28 @@ export default function AdminCompanies() {
       <Dialog open={!!editingCompany || isCreating} onOpenChange={(open) => { if(!open) {setEditingCompany(null); setIsCreating(false)} }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingCompany ? 'Редактировать партнера' : 'Новый партнер'}</DialogTitle>
+            <DialogTitle>{editingCompany ? t("edit_partner") : t("new_partner")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label>Название компании</Label>
+              <Label>{t("partner_name")}</Label>
               <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
             </div>
             <div className="space-y-2">
-              <Label>Контактный Email</Label>
+              <Label>{t("contact_email")}</Label>
               <Input type="email" value={form.contactEmail} onChange={e => setForm({...form, contactEmail: e.target.value})} />
             </div>
             <div className="space-y-2">
-              <Label>Пароль для входа (мин. 4 символа)</Label>
+              <Label>{t("partner_password")}</Label>
               <Input value={form.password} onChange={e => setForm({...form, password: e.target.value})} required minLength={4} />
             </div>
             <div className="flex items-center gap-2 pt-2">
               <input type="checkbox" id="cactive" checked={form.active} onChange={e => setForm({...form, active: e.target.checked})} className="w-4 h-4" />
-              <Label htmlFor="cactive">Доступ разрешен</Label>
+              <Label htmlFor="cactive">{t("partner_active")}</Label>
             </div>
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={createCompany.isPending || updateCompany.isPending}>
-                Сохранить
+                {t("save")}
               </Button>
             </div>
           </form>
@@ -162,10 +164,16 @@ function PricingDialog({ companyId, onClose }: { companyId: number, onClose: () 
   const { data: prices, isLoading } = useGetCompanyPriceList(companyId)
   const setPrices = useSetCompanyPriceList()
   const queryClient = useQueryClient()
+  const { t, lang } = useI18n()
   
   const [localPrices, setLocalPrices] = useState<Record<number, number>>({})
 
-  // Initialize local state once data loads
+  const getTourName = (p: any) => {
+    if (lang === 'es' && p.tourNameEs) return p.tourNameEs;
+    if (lang === 'en' && p.tourNameEn) return p.tourNameEn;
+    return p.tourName;
+  }
+
   useState(() => {
     if (prices) {
       const init: Record<number, number> = {}
@@ -174,7 +182,6 @@ function PricingDialog({ companyId, onClose }: { companyId: number, onClose: () 
     }
   })
 
-  // Hacky way to sync on load
   if (prices && Object.keys(localPrices).length === 0 && prices.length > 0) {
     const init: Record<number, number> = {}
     prices.forEach(p => { init[p.tourId] = p.price })
@@ -198,29 +205,29 @@ function PricingDialog({ companyId, onClose }: { companyId: number, onClose: () 
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Прайс-лист партнера</DialogTitle>
-          <DialogDescription>Установите специальные цены для этого партнера. Базовая цена указана зачеркнутой.</DialogDescription>
+          <DialogTitle>{t("price_list_title")}</DialogTitle>
+          <DialogDescription>{t("price_list_desc")}</DialogDescription>
         </DialogHeader>
         
         {isLoading ? (
            <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
         ) : (
           <div className="space-y-4 pt-4">
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-3 max-h-[50vh] overflow-y-auto pr-2">
               {prices?.map(p => (
-                <div key={p.tourId} className="flex items-center justify-between bg-muted/30 p-3 rounded-lg border">
+                <div key={p.tourId} className="flex flex-col sm:flex-row sm:items-center justify-between bg-muted/30 p-3 rounded-lg border gap-2">
                   <div>
-                    <p className="font-medium">{p.tourName}</p>
-                    <p className="text-sm text-muted-foreground line-through">Базовая: {p.basePrice} ₽</p>
+                    <p className="font-medium">{getTourName(p)}</p>
+                    <p className="text-sm text-muted-foreground line-through">{t("base_price")}: ${p.basePrice}</p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">$</span>
                     <Input 
                       type="number" 
-                      className="w-32 text-right font-bold text-primary"
+                      className="w-24 text-right font-bold text-primary"
                       value={localPrices[p.tourId] ?? p.price}
                       onChange={e => setLocalPrices({...localPrices, [p.tourId]: parseInt(e.target.value) || 0})}
                     />
-                    <span className="text-muted-foreground">₽</span>
                   </div>
                 </div>
               ))}
@@ -229,7 +236,7 @@ function PricingDialog({ companyId, onClose }: { companyId: number, onClose: () 
             <div className="flex justify-end pt-4">
               <Button onClick={handleSave} disabled={setPrices.isPending}>
                 {setPrices.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
-                Сохранить прайс
+                {t("save_price")}
               </Button>
             </div>
           </div>

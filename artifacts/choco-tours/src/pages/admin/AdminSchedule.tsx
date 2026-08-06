@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Loader2, Plus, Pencil, Trash2, CalendarDays, Lock, Unlock } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
 
 export default function AdminSchedule() {
   const [dateFrom, setDateFrom] = useState(format(new Date(), "yyyy-MM-dd"))
@@ -18,15 +19,15 @@ export default function AdminSchedule() {
   const queryClient = useQueryClient()
   const { data: slots, isLoading } = useAdminListSlots({ from: dateFrom, to: dateTo })
   const { data: tours } = useAdminListTours()
+  const { t, lang, dateLocale } = useI18n()
 
   const [isBulkCreating, setIsBulkCreating] = useState(false)
-  const [editingSlot, setEditingSlot] = useState<any>(null)
 
   const updateSlot = useUpdateSlot()
   const deleteSlot = useDeleteSlot()
 
   const handleDelete = (id: number) => {
-    if(confirm("Удалить этот слот? Бронирования на него могут быть потеряны.")) {
+    if(confirm(t("confirm_delete"))) {
       deleteSlot.mutate({ id }, {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: getAdminListSlotsQueryKey({ from: dateFrom, to: dateTo }) })
       })
@@ -39,25 +40,39 @@ export default function AdminSchedule() {
     })
   }
 
+  const getTourName = (slot: any) => {
+    if (lang === 'es' && slot.tourNameEs) return slot.tourNameEs;
+    if (lang === 'en' && slot.tourNameEn) return slot.tourNameEn;
+    if (tours) {
+      const tour = tours.find(t => t.id === slot.tourId);
+      if (tour) {
+        if (lang === 'es' && tour.nameEs) return tour.nameEs;
+        if (lang === 'en' && tour.nameEn) return tour.nameEn;
+        return tour.name;
+      }
+    }
+    return slot.tourName;
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary mb-1 sm:mb-2">Расписание</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">Управление слотами для экскурсий</p>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary mb-1 sm:mb-2">{t("schedule_title")}</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">{t("schedule_desc")}</p>
         </div>
         <Button onClick={() => setIsBulkCreating(true)} className="w-full sm:w-auto">
-          <CalendarDays className="w-4 h-4 mr-2"/> Массовое создание
+          <CalendarDays className="w-4 h-4 mr-2"/> {t("bulk_create")}
         </Button>
       </div>
 
       <Card className="p-4 flex flex-col sm:flex-row gap-4 items-end bg-card shadow-sm">
         <div className="space-y-2 w-full sm:w-auto">
-          <label className="text-sm font-medium">От даты</label>
+          <label className="text-sm font-medium">{t("from_date")}</label>
           <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} required />
         </div>
         <div className="space-y-2 w-full sm:w-auto">
-          <label className="text-sm font-medium">До даты</label>
+          <label className="text-sm font-medium">{t("to_date")}</label>
           <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} required />
         </div>
       </Card>
@@ -66,16 +81,16 @@ export default function AdminSchedule() {
         {isLoading ? (
           <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
         ) : !slots?.length ? (
-          <div className="text-center p-12 text-muted-foreground">В этом периоде нет слотов</div>
+          <div className="text-center p-12 text-muted-foreground">{t("no_slots_admin")}</div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Дата</TableHead>
-                <TableHead>Время</TableHead>
-                <TableHead>Экскурсия</TableHead>
-                <TableHead>Места</TableHead>
-                <TableHead>Статус</TableHead>
+                <TableHead>{t("date")}</TableHead>
+                <TableHead>{t("time")}</TableHead>
+                <TableHead>{t("col_tour")}</TableHead>
+                <TableHead>{t("col_seats")}</TableHead>
+                <TableHead>{t("col_status")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -84,23 +99,23 @@ export default function AdminSchedule() {
                 <TableRow key={s.id} className={s.blocked ? "bg-muted/50 opacity-60" : ""}>
                   <TableCell className="font-medium">{format(parseISO(s.date), 'dd.MM.yyyy')}</TableCell>
                   <TableCell className="font-bold">{s.startTime}</TableCell>
-                  <TableCell>{s.tourName}</TableCell>
+                  <TableCell>{getTourName(s)}</TableCell>
                   <TableCell>
                     <span className="text-primary font-medium">{s.bookedSeats}</span>
                     <span className="text-muted-foreground"> / {s.capacity}</span>
                   </TableCell>
                   <TableCell>
                     {s.blocked ? (
-                      <span className="text-destructive text-sm flex items-center gap-1"><Lock className="w-3 h-3"/> Заблокирован</span>
+                      <span className="text-destructive text-sm flex items-center gap-1"><Lock className="w-3 h-3"/> {t("blocked")}</span>
                     ) : s.availableSeats === 0 ? (
-                      <span className="text-muted-foreground text-sm font-medium">Мест нет</span>
+                      <span className="text-muted-foreground text-sm font-medium">{t("no_seats")}</span>
                     ) : (
-                      <span className="text-green-600 text-sm font-medium">Доступен</span>
+                      <span className="text-green-600 text-sm font-medium">{t("available")}</span>
                     )}
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleToggleBlock(s)} title={s.blocked ? "Разблокировать" : "Заблокировать"}>
+                      <Button variant="ghost" size="icon" onClick={() => handleToggleBlock(s)}>
                         {s.blocked ? <Unlock className="w-4 h-4 text-primary" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
                       </Button>
                       <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDelete(s.id)}>
@@ -128,6 +143,7 @@ export default function AdminSchedule() {
 
 function BulkCreateDialog({ onClose, tours, onSuccess }: { onClose: () => void, tours: any[], onSuccess: () => void }) {
   const bulkCreate = useCreateSlotsBulk()
+  const { t, lang } = useI18n()
   
   const [form, setForm] = useState({
     tourId: tours[0]?.id || 0,
@@ -145,7 +161,7 @@ function BulkCreateDialog({ onClose, tours, onSuccess }: { onClose: () => void, 
     }))
   }
 
-  const daysLabels = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
+  const daysLabels = [t("day_su"), t("day_mo"), t("day_tu"), t("day_we"), t("day_th"), t("day_fr"), t("day_sa")]
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
@@ -153,7 +169,7 @@ function BulkCreateDialog({ onClose, tours, onSuccess }: { onClose: () => void, 
     // Parse times
     const timesList = form.times.split(',').map(t => t.trim()).filter(t => t.match(/^\d{2}:\d{2}$/))
     if (timesList.length === 0) {
-      alert("Укажите хотя бы одно время в формате ЧЧ:ММ")
+      alert(t("format_time_hint"))
       return
     }
     
@@ -168,29 +184,34 @@ function BulkCreateDialog({ onClose, tours, onSuccess }: { onClose: () => void, 
       }
     }, {
       onSuccess: (res) => {
-        alert(`Успешно создано слотов: ${res.created}`)
         onSuccess()
         onClose()
       }
     })
   }
 
+  const getTourName = (tour: any) => {
+    if (lang === 'es' && tour.nameEs) return tour.nameEs;
+    if (lang === 'en' && tour.nameEn) return tour.nameEn;
+    return tour.name;
+  }
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Генерация расписания</DialogTitle>
+          <DialogTitle>{t("bulk_dialog_title")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label>Экскурсия</Label>
+            <Label>{t("col_tour")}</Label>
             <Select value={String(form.tourId)} onValueChange={v => setForm({...form, tourId: parseInt(v)})}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {tours.map(t => (
-                  <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                {tours.map(tour => (
+                  <SelectItem key={tour.id} value={String(tour.id)}>{getTourName(tour)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -198,17 +219,17 @@ function BulkCreateDialog({ onClose, tours, onSuccess }: { onClose: () => void, 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>С даты</Label>
+              <Label>{t("from_date")}</Label>
               <Input type="date" value={form.dateFrom} onChange={e => setForm({...form, dateFrom: e.target.value})} required />
             </div>
             <div className="space-y-2">
-              <Label>По дату</Label>
+              <Label>{t("to_date")}</Label>
               <Input type="date" value={form.dateTo} onChange={e => setForm({...form, dateTo: e.target.value})} required />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Дни недели</Label>
+            <Label>{t("bulk_weekdays")}</Label>
             <div className="flex flex-wrap gap-2">
               {[1,2,3,4,5,6,0].map(day => (
                 <button
@@ -229,20 +250,20 @@ function BulkCreateDialog({ onClose, tours, onSuccess }: { onClose: () => void, 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div className="space-y-2">
-              <Label>Вместимость группы</Label>
+              <Label>{t("bulk_capacity")}</Label>
               <Input type="number" min={1} value={form.capacity} onChange={e => setForm({...form, capacity: parseInt(e.target.value)})} required />
             </div>
             <div className="space-y-2">
-              <Label>Время (через запятую)</Label>
+              <Label>{t("bulk_times")}</Label>
               <Input placeholder="10:00, 14:00" value={form.times} onChange={e => setForm({...form, times: e.target.value})} required />
-              <p className="text-xs text-muted-foreground">Формат: ЧЧ:ММ</p>
+              <p className="text-xs text-muted-foreground">{t("format_time_hint")}</p>
             </div>
           </div>
 
           <div className="flex justify-end pt-4">
             <Button type="submit" disabled={bulkCreate.isPending}>
               {bulkCreate.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Сгенерировать
+              {t("generate")}
             </Button>
           </div>
         </form>

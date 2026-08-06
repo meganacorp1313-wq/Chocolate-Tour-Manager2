@@ -34,7 +34,8 @@
 - Company prices: `company_prices` rows override `tours.base_price`; missing row → company pays base price. `/api/tours` returns `companyPrice` when a company session cookie is present.
 - Slot availability is computed on read: capacity minus sum of confirmed booking seats; blocked slots and inactive tours are hidden from public endpoints.
 - Bulk schedule generation (`POST /api/admin/slots/bulk`) skips date+time duplicates for the same tour.
-- Prices are integer rubles.
+- Prices are integer US dollars (factory is in the Dominican Republic).
+- Trilingual UI: Spanish (default), Russian, English — custom `I18nProvider` in `artifacts/choco-tours/src/lib/i18n`, choice persisted in localStorage, switcher in all layouts and login screens. Tours store translations in DB columns (`name`/`description` = ru, plus `name_es/name_en/description_es/description_en`); frontend falls back to Russian when a translation is empty.
 
 ## Product
 

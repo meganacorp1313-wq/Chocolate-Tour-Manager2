@@ -13,7 +13,10 @@ export interface Booking {
   /** Confirmation code */
   code: string;
   slotId: number;
+  /** Russian name */
   tourName: string;
+  tourNameEs: string;
+  tourNameEn: string;
   date: string;
   startTime: string;
   customerName: string;

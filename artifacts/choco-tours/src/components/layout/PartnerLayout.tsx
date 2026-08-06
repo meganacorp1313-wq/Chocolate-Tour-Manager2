@@ -2,10 +2,13 @@ import { Link } from "wouter"
 import { useCompanyLogout, useGetCompanySession, getGetCompanySessionQueryKey } from "@workspace/api-client-react"
 import { Button } from "@/components/ui/button"
 import { LogOut } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
 export function PartnerLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useGetCompanySession({ query: { retry: false, queryKey: getGetCompanySessionQueryKey() } })
   const logout = useCompanyLogout()
+  const { t } = useI18n()
 
   const handleLogout = () => {
     logout.mutate(undefined, {
@@ -19,15 +22,16 @@ export function PartnerLayout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 truncate pr-2">
             <Link href="/" className="font-serif text-lg sm:text-xl font-bold text-primary tracking-tight truncate">
-              Шоко<span className="hidden sm:inline">ладная</span> Фабрика
+              {t("choco_factory")}
             </Link>
             <span className="text-muted-foreground text-sm shrink-0">/</span>
-            <span className="text-sm font-medium truncate shrink-0">B2B<span className="hidden sm:inline"> Партнер</span></span>
+            <span className="text-sm font-medium truncate shrink-0">{t("partner_cabinet")}</span>
           </div>
           <nav className="flex items-center gap-2 shrink-0">
             {session && <span className="hidden sm:inline text-sm text-muted-foreground mr-2">{session.name}</span>}
+            <LanguageSwitcher />
             <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 px-2 sm:px-3">
-              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Выйти</span>
+              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">{t("logout")}</span>
             </Button>
           </nav>
         </div>

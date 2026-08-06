@@ -9,7 +9,10 @@
 export interface Slot {
   id: number;
   tourId: number;
+  /** Russian name */
   tourName: string;
+  tourNameEs: string;
+  tourNameEn: string;
   /** YYYY-MM-DD */
   date: string;
   /** HH:MM */

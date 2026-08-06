@@ -155,6 +155,8 @@ router.get("/slots", async (req, res): Promise<void> => {
         id: r.slots.id,
         tourId: r.slots.tourId,
         tourName: r.tours.name,
+        tourNameEs: r.tours.nameEs,
+        tourNameEn: r.tours.nameEn,
         date: r.slots.date,
         startTime: r.slots.startTime,
         capacity: r.slots.capacity,
@@ -267,8 +269,8 @@ router.post("/bookings", async (req, res): Promise<void> => {
       const whop = await getWhopClient();
       const companyIdEnv = process.env.WHOP_COMPANY_ID!;
 
-      // Prices stored as RUB integers; divide by 100 for USD amount (min $1)
-      const priceUsd = Math.max(1, totalPrice / 100);
+      // Prices stored as integer USD
+      const priceUsd = Math.max(1, totalPrice);
 
       const plan = await (whop as any).plans.create({
         company_id: companyIdEnv,

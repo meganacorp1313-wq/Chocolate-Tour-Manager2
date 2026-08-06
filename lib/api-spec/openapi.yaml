@@ -686,13 +686,17 @@ components:
       required: [error]
     Tour:
       type: object
-      required: [id, name, description, durationMinutes, basePrice, active]
+      required: [id, name, description, nameEs, nameEn, descriptionEs, descriptionEn, durationMinutes, basePrice, active]
       properties:
         id: { type: integer }
-        name: { type: string }
-        description: { type: string }
+        name: { type: string, description: "Russian name" }
+        description: { type: string, description: "Russian description" }
+        nameEs: { type: string, description: "Spanish name" }
+        nameEn: { type: string, description: "English name" }
+        descriptionEs: { type: string, description: "Spanish description" }
+        descriptionEn: { type: string, description: "English description" }
         durationMinutes: { type: integer }
-        basePrice: { type: integer, description: "Retail price per person, RUB" }
+        basePrice: { type: integer, description: "Retail price per person, USD" }
         companyPrice: { type: ["integer", "null"], description: "Price for the logged-in company if any" }
         imageUrl: { type: ["string", "null"] }
         active: { type: boolean }
@@ -702,6 +706,10 @@ components:
       properties:
         name: { type: string, minLength: 1 }
         description: { type: string }
+        nameEs: { type: string }
+        nameEn: { type: string }
+        descriptionEs: { type: string }
+        descriptionEn: { type: string }
         durationMinutes: { type: integer, minimum: 1 }
         basePrice: { type: integer, minimum: 0 }
         imageUrl: { type: ["string", "null"] }
@@ -711,6 +719,10 @@ components:
       properties:
         name: { type: string, minLength: 1 }
         description: { type: string }
+        nameEs: { type: string }
+        nameEn: { type: string }
+        descriptionEs: { type: string }
+        descriptionEn: { type: string }
         durationMinutes: { type: integer, minimum: 1 }
         basePrice: { type: integer, minimum: 0 }
         imageUrl: { type: ["string", "null"] }
@@ -725,11 +737,13 @@ components:
         slotCount: { type: integer }
     Slot:
       type: object
-      required: [id, tourId, tourName, date, startTime, capacity, bookedSeats, availableSeats, blocked]
+      required: [id, tourId, tourName, tourNameEs, tourNameEn, date, startTime, capacity, bookedSeats, availableSeats, blocked]
       properties:
         id: { type: integer }
         tourId: { type: integer }
-        tourName: { type: string }
+        tourName: { type: string, description: "Russian name" }
+        tourNameEs: { type: string }
+        tourNameEn: { type: string }
         date: { type: string, description: "YYYY-MM-DD" }
         startTime: { type: string, description: "HH:MM" }
         capacity: { type: integer }
@@ -783,12 +797,14 @@ components:
         comment: { type: ["string", "null"] }
     Booking:
       type: object
-      required: [id, code, slotId, tourName, date, startTime, customerName, phone, peopleCount, pricePerPerson, totalPrice, status, createdAt]
+      required: [id, code, slotId, tourName, tourNameEs, tourNameEn, date, startTime, customerName, phone, peopleCount, pricePerPerson, totalPrice, status, createdAt]
       properties:
         id: { type: integer }
         code: { type: string, description: "Confirmation code" }
         slotId: { type: integer }
-        tourName: { type: string }
+        tourName: { type: string, description: "Russian name" }
+        tourNameEs: { type: string }
+        tourNameEn: { type: string }
         date: { type: string }
         startTime: { type: string }
         customerName: { type: string }

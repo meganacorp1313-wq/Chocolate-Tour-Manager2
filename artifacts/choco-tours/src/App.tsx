@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { I18nProvider } from '@/lib/i18n';
 
 import Home from '@/pages/public/Home';
 import BookingConfirmation from '@/pages/public/BookingConfirmation';
@@ -16,10 +17,10 @@ function NotFound() {
           404
         </h1>
         <p className="text-muted-foreground">
-          Страница не найдена
+          Not Found
         </p>
         <a href="/" className="inline-block mt-4 text-primary hover:underline">
-          Вернуться на главную
+          Go Home
         </a>
       </div>
     </div>
@@ -48,11 +49,13 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-        <Router />
-      </WouterRouter>
-    </QueryClientProvider>
+    <I18nProvider>
+      <QueryClientProvider client={queryClient}>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+          <Router />
+        </WouterRouter>
+      </QueryClientProvider>
+    </I18nProvider>
   );
 }
 

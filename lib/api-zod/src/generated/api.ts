@@ -21,10 +21,14 @@ export const HealthCheckResponse = zod.object({
  */
 export const ListToursResponseItem = zod.object({
   "id": zod.number().int(),
-  "name": zod.string(),
-  "description": zod.string(),
+  "name": zod.string().describe('Russian name'),
+  "description": zod.string().describe('Russian description'),
+  "nameEs": zod.string().describe('Spanish name'),
+  "nameEn": zod.string().describe('English name'),
+  "descriptionEs": zod.string().describe('Spanish description'),
+  "descriptionEn": zod.string().describe('English description'),
   "durationMinutes": zod.number().int(),
-  "basePrice": zod.number().int().describe('Retail price per person, RUB'),
+  "basePrice": zod.number().int().describe('Retail price per person, USD'),
   "companyPrice": zod.number().int().nullish().describe('Price for the logged-in company if any'),
   "imageUrl": zod.string().nullish(),
   "active": zod.boolean()
@@ -58,7 +62,9 @@ export const ListSlotsQueryParams = zod.object({
 export const ListSlotsResponseItem = zod.object({
   "id": zod.number().int(),
   "tourId": zod.number().int(),
-  "tourName": zod.string(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
   "date": zod.string().describe('YYYY-MM-DD'),
   "startTime": zod.string().describe('HH:MM'),
   "capacity": zod.number().int(),
@@ -74,6 +80,9 @@ export const ListSlotsResponse = zod.array(ListSlotsResponseItem)
  */
 
 
+
+
+
 export const CreateBookingBody = zod.object({
   "slotId": zod.number().int(),
   "customerName": zod.string().min(1),
@@ -87,7 +96,9 @@ export const CreateBookingResponse = zod.object({
   "id": zod.number().int(),
   "code": zod.string().describe('Confirmation code'),
   "slotId": zod.number().int(),
-  "tourName": zod.string(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
   "date": zod.string(),
   "startTime": zod.string(),
   "customerName": zod.string(),
@@ -117,7 +128,9 @@ export const GetBookingByCodeResponse = zod.object({
   "id": zod.number().int(),
   "code": zod.string().describe('Confirmation code'),
   "slotId": zod.number().int(),
-  "tourName": zod.string(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
   "date": zod.string(),
   "startTime": zod.string(),
   "customerName": zod.string(),
@@ -139,6 +152,7 @@ export const GetBookingByCodeResponse = zod.object({
 /**
  * @summary Company login with company password
  */
+
 
 
 export const CompanyLoginBody = zod.object({
@@ -187,7 +201,9 @@ export const GetCompanyBookingsResponseItem = zod.object({
   "id": zod.number().int(),
   "code": zod.string().describe('Confirmation code'),
   "slotId": zod.number().int(),
-  "tourName": zod.string(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
   "date": zod.string(),
   "startTime": zod.string(),
   "customerName": zod.string(),
@@ -210,6 +226,7 @@ export const GetCompanyBookingsResponse = zod.array(GetCompanyBookingsResponseIt
 /**
  * @summary Admin login
  */
+
 
 
 export const AdminLoginBody = zod.object({
@@ -255,10 +272,14 @@ export const GetAdminSummaryResponse = zod.object({
  */
 export const AdminListToursResponseItem = zod.object({
   "id": zod.number().int(),
-  "name": zod.string(),
-  "description": zod.string(),
+  "name": zod.string().describe('Russian name'),
+  "description": zod.string().describe('Russian description'),
+  "nameEs": zod.string().describe('Spanish name'),
+  "nameEn": zod.string().describe('English name'),
+  "descriptionEs": zod.string().describe('Spanish description'),
+  "descriptionEn": zod.string().describe('English description'),
   "durationMinutes": zod.number().int(),
-  "basePrice": zod.number().int().describe('Retail price per person, RUB'),
+  "basePrice": zod.number().int().describe('Retail price per person, USD'),
   "companyPrice": zod.number().int().nullish().describe('Price for the logged-in company if any'),
   "imageUrl": zod.string().nullish(),
   "active": zod.boolean()
@@ -274,9 +295,14 @@ export const AdminListToursResponse = zod.array(AdminListToursResponseItem)
 export const createTourBodyBasePriceMin = 0;
 
 
+
 export const CreateTourBody = zod.object({
   "name": zod.string().min(1),
   "description": zod.string(),
+  "nameEs": zod.string().optional(),
+  "nameEn": zod.string().optional(),
+  "descriptionEs": zod.string().optional(),
+  "descriptionEn": zod.string().optional(),
   "durationMinutes": zod.number().int().min(1),
   "basePrice": zod.number().int().min(createTourBodyBasePriceMin),
   "imageUrl": zod.string().nullish(),
@@ -285,10 +311,14 @@ export const CreateTourBody = zod.object({
 
 export const CreateTourResponse = zod.object({
   "id": zod.number().int(),
-  "name": zod.string(),
-  "description": zod.string(),
+  "name": zod.string().describe('Russian name'),
+  "description": zod.string().describe('Russian description'),
+  "nameEs": zod.string().describe('Spanish name'),
+  "nameEn": zod.string().describe('English name'),
+  "descriptionEs": zod.string().describe('Spanish description'),
+  "descriptionEn": zod.string().describe('English description'),
   "durationMinutes": zod.number().int(),
-  "basePrice": zod.number().int().describe('Retail price per person, RUB'),
+  "basePrice": zod.number().int().describe('Retail price per person, USD'),
   "companyPrice": zod.number().int().nullish().describe('Price for the logged-in company if any'),
   "imageUrl": zod.string().nullish(),
   "active": zod.boolean()
@@ -303,12 +333,18 @@ export const UpdateTourParams = zod.object({
 })
 
 
+
 export const updateTourBodyBasePriceMin = 0;
+
 
 
 export const UpdateTourBody = zod.object({
   "name": zod.string().min(1).optional(),
   "description": zod.string().optional(),
+  "nameEs": zod.string().optional(),
+  "nameEn": zod.string().optional(),
+  "descriptionEs": zod.string().optional(),
+  "descriptionEn": zod.string().optional(),
   "durationMinutes": zod.number().int().min(1).optional(),
   "basePrice": zod.number().int().min(updateTourBodyBasePriceMin).optional(),
   "imageUrl": zod.string().nullish(),
@@ -317,10 +353,14 @@ export const UpdateTourBody = zod.object({
 
 export const UpdateTourResponse = zod.object({
   "id": zod.number().int(),
-  "name": zod.string(),
-  "description": zod.string(),
+  "name": zod.string().describe('Russian name'),
+  "description": zod.string().describe('Russian description'),
+  "nameEs": zod.string().describe('Spanish name'),
+  "nameEn": zod.string().describe('English name'),
+  "descriptionEs": zod.string().describe('Spanish description'),
+  "descriptionEn": zod.string().describe('English description'),
   "durationMinutes": zod.number().int(),
-  "basePrice": zod.number().int().describe('Retail price per person, RUB'),
+  "basePrice": zod.number().int().describe('Retail price per person, USD'),
   "companyPrice": zod.number().int().nullish().describe('Price for the logged-in company if any'),
   "imageUrl": zod.string().nullish(),
   "active": zod.boolean()
@@ -350,7 +390,9 @@ export const AdminListSlotsQueryParams = zod.object({
 export const AdminListSlotsResponseItem = zod.object({
   "id": zod.number().int(),
   "tourId": zod.number().int(),
-  "tourName": zod.string(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
   "date": zod.string().describe('YYYY-MM-DD'),
   "startTime": zod.string().describe('HH:MM'),
   "capacity": zod.number().int(),
@@ -366,6 +408,7 @@ export const AdminListSlotsResponse = zod.array(AdminListSlotsResponseItem)
  */
 
 
+
 export const CreateSlotBody = zod.object({
   "tourId": zod.number().int(),
   "date": zod.string(),
@@ -376,7 +419,9 @@ export const CreateSlotBody = zod.object({
 export const CreateSlotResponse = zod.object({
   "id": zod.number().int(),
   "tourId": zod.number().int(),
-  "tourName": zod.string(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
   "date": zod.string().describe('YYYY-MM-DD'),
   "startTime": zod.string().describe('HH:MM'),
   "capacity": zod.number().int(),
@@ -391,6 +436,8 @@ export const CreateSlotResponse = zod.object({
  */
 export const createSlotsBulkBodyWeekdaysItemMin = 0;
 export const createSlotsBulkBodyWeekdaysItemMax = 6;
+
+
 
 
 export const CreateSlotsBulkBody = zod.object({
@@ -415,6 +462,8 @@ export const UpdateSlotParams = zod.object({
 })
 
 
+
+
 export const UpdateSlotBody = zod.object({
   "startTime": zod.string().optional(),
   "capacity": zod.number().int().min(1).optional(),
@@ -424,7 +473,9 @@ export const UpdateSlotBody = zod.object({
 export const UpdateSlotResponse = zod.object({
   "id": zod.number().int(),
   "tourId": zod.number().int(),
-  "tourName": zod.string(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
   "date": zod.string().describe('YYYY-MM-DD'),
   "startTime": zod.string().describe('HH:MM'),
   "capacity": zod.number().int(),
@@ -467,6 +518,7 @@ export const AdminListCompaniesResponse = zod.array(AdminListCompaniesResponseIt
 export const createCompanyBodyPasswordMin = 4;
 
 
+
 export const CreateCompanyBody = zod.object({
   "name": zod.string().min(1),
   "contactEmail": zod.string().nullish(),
@@ -493,6 +545,7 @@ export const UpdateCompanyParams = zod.object({
 
 
 export const updateCompanyBodyPasswordMin = 4;
+
 
 
 export const UpdateCompanyBody = zod.object({
@@ -550,6 +603,7 @@ export const SetCompanyPriceListParams = zod.object({
 export const setCompanyPriceListBodyItemsItemPriceMin = 0;
 
 
+
 export const SetCompanyPriceListBody = zod.object({
   "items": zod.array(zod.object({
   "tourId": zod.number().int(),
@@ -571,6 +625,7 @@ export const SetCompanyPriceListResponse = zod.array(SetCompanyPriceListResponse
  */
 
 export const changeAdminPasswordBodyNewPasswordMin = 6;
+
 
 
 export const ChangeAdminPasswordBody = zod.object({
@@ -595,7 +650,9 @@ export const AdminListBookingsResponseItem = zod.object({
   "id": zod.number().int(),
   "code": zod.string().describe('Confirmation code'),
   "slotId": zod.number().int(),
-  "tourName": zod.string(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
   "date": zod.string(),
   "startTime": zod.string(),
   "customerName": zod.string(),
@@ -614,12 +671,15 @@ export const AdminListBookingsResponseItem = zod.object({
 })
 export const AdminListBookingsResponse = zod.array(AdminListBookingsResponseItem)
 
+
 /**
  * @summary Cancel retail bookings whose payment window has expired
  */
 export const ExpireUnpaidBookingsResponse = zod.object({
   "cancelled": zod.number().int()
 })
+
+
 /**
  * @summary Update booking status
  */
@@ -635,7 +695,9 @@ export const UpdateBookingStatusResponse = zod.object({
   "id": zod.number().int(),
   "code": zod.string().describe('Confirmation code'),
   "slotId": zod.number().int(),
-  "tourName": zod.string(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
   "date": zod.string(),
   "startTime": zod.string(),
   "customerName": zod.string(),
@@ -652,4 +714,5 @@ export const UpdateBookingStatusResponse = zod.object({
   "comment": zod.string().nullish(),
   "createdAt": zod.string()
 })
+
 

@@ -10,6 +10,10 @@ export interface TourUpdate {
   /** @minLength 1 */
   name?: string;
   description?: string;
+  nameEs?: string;
+  nameEn?: string;
+  descriptionEs?: string;
+  descriptionEn?: string;
   /** @minimum 1 */
   durationMinutes?: number;
   /** @minimum 0 */

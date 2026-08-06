@@ -8,10 +8,20 @@
 
 export interface Tour {
   id: number;
+  /** Russian name */
   name: string;
+  /** Russian description */
   description: string;
+  /** Spanish name */
+  nameEs: string;
+  /** English name */
+  nameEn: string;
+  /** Spanish description */
+  descriptionEs: string;
+  /** English description */
+  descriptionEn: string;
   durationMinutes: number;
-  /** Retail price per person, RUB */
+  /** Retail price per person, USD */
   basePrice: number;
   /**
      * Price for the logged-in company if any

@@ -60,6 +60,8 @@ export interface BookingView {
   code: string;
   slotId: number;
   tourName: string;
+  tourNameEs: string;
+  tourNameEn: string;
   date: string;
   startTime: string;
   customerName: string;
@@ -89,6 +91,8 @@ export function toBookingView(
     code: booking.code,
     slotId: booking.slotId,
     tourName: tour.name,
+    tourNameEs: tour.nameEs,
+    tourNameEn: tour.nameEn,
     date: slot.date,
     startTime: slot.startTime,
     customerName: booking.customerName,

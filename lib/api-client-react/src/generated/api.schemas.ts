@@ -19,10 +19,20 @@ export interface ErrorMessage {
 
 export interface Tour {
   id: number;
+  /** Russian name */
   name: string;
+  /** Russian description */
   description: string;
+  /** Spanish name */
+  nameEs: string;
+  /** English name */
+  nameEn: string;
+  /** Spanish description */
+  descriptionEs: string;
+  /** English description */
+  descriptionEn: string;
   durationMinutes: number;
-  /** Retail price per person, RUB */
+  /** Retail price per person, USD */
   basePrice: number;
   /**
      * Price for the logged-in company if any
@@ -38,6 +48,10 @@ export interface TourInput {
   /** @minLength 1 */
   name: string;
   description: string;
+  nameEs?: string;
+  nameEn?: string;
+  descriptionEs?: string;
+  descriptionEn?: string;
   /** @minimum 1 */
   durationMinutes: number;
   /** @minimum 0 */
@@ -51,6 +65,10 @@ export interface TourUpdate {
   /** @minLength 1 */
   name?: string;
   description?: string;
+  nameEs?: string;
+  nameEn?: string;
+  descriptionEs?: string;
+  descriptionEn?: string;
   /** @minimum 1 */
   durationMinutes?: number;
   /** @minimum 0 */
@@ -71,7 +89,10 @@ export interface DayAvailability {
 export interface Slot {
   id: number;
   tourId: number;
+  /** Russian name */
   tourName: string;
+  tourNameEs: string;
+  tourNameEn: string;
   /** YYYY-MM-DD */
   date: string;
   /** HH:MM */
@@ -147,12 +168,22 @@ export const BookingStatus = {
  * @nullable
  */
 export type BookingPaymentStatus = typeof BookingPaymentStatus[keyof typeof BookingPaymentStatus] | null;
+
+
+export const BookingPaymentStatus = {
+  pending: 'pending',
+  paid: 'paid',
+} as const;
+
 export interface Booking {
   id: number;
   /** Confirmation code */
   code: string;
   slotId: number;
+  /** Russian name */
   tourName: string;
+  tourNameEs: string;
+  tourNameEn: string;
   date: string;
   startTime: string;
   customerName: string;
@@ -314,8 +345,3 @@ export type ExpireUnpaidBookings200 = {
   cancelled: number;
 };
 
-
-export const BookingPaymentStatus = {
-  pending: 'pending',
-  paid: 'paid',
-} as const;
