@@ -69,12 +69,12 @@ export default function AdminCompanies() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-primary mb-2">Компании-партнеры</h1>
-          <p className="text-muted-foreground">Управление B2B партнерами и их скидками</p>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary mb-1 sm:mb-2">Компании-партнеры</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Управление B2B партнерами и их скидками</p>
         </div>
-        <Button onClick={handleCreate}><Plus className="w-4 h-4 mr-2"/> Добавить партнера</Button>
+        <Button onClick={handleCreate} className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2"/> Добавить партнера</Button>
       </div>
 
       <Card>

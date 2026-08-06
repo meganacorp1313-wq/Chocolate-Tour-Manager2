@@ -17,16 +17,16 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover"
           onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1549007994-cb92caebd54b?auto=format&fit=crop&q=80&w=2000" }}
         />
-        <div className="relative z-20 text-center text-white px-4 max-w-3xl">
-          <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 drop-shadow-md">
+        <div className="relative z-20 text-center text-white px-4 max-w-3xl w-full mx-auto">
+          <h1 className="font-serif text-4xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 drop-shadow-md leading-tight">
             Магия настоящего шоколада
           </h1>
-          <p className="text-xl md:text-2xl font-medium mb-10 drop-shadow">
+          <p className="text-lg sm:text-xl md:text-2xl font-medium mb-8 sm:mb-10 drop-shadow">
             Приглашаем вас за кулисы нашей семейной фабрики. Попробуйте, почувствуйте и создайте свой идеальный десерт.
           </p>
           <a 
             href="#booking" 
-            className="inline-flex h-12 items-center justify-center rounded-md bg-accent px-8 text-lg font-medium text-accent-foreground shadow transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="inline-flex h-12 items-center justify-center rounded-md bg-accent px-6 sm:px-8 text-base sm:text-lg font-medium text-accent-foreground shadow transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full sm:w-auto"
           >
             Забронировать экскурсию
           </a>
@@ -36,8 +36,8 @@ export default function Home() {
       {/* Tours Section */}
       <section className="py-20 bg-background" id="tours">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-primary mb-4">Наши программы</h2>
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-4">Наши программы</h2>
             <div className="w-24 h-1 bg-accent mx-auto rounded-full" />
           </div>
 
@@ -77,8 +77,8 @@ export default function Home() {
       {/* Booking Section */}
       <section className="py-20 bg-secondary/30" id="booking">
         <div className="container mx-auto px-4 max-w-5xl">
-          <div className="text-center mb-16">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-primary mb-4">Календарь экскурсий</h2>
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-4">Календарь экскурсий</h2>
             <p className="text-muted-foreground">Выберите удобный день и время для визита</p>
           </div>
           

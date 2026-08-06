@@ -79,27 +79,27 @@ function PartnerDashboard() {
 
   return (
     <Tabs defaultValue="booking" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 max-w-md mb-8">
-        <TabsTrigger value="booking">Бронирование</TabsTrigger>
-        <TabsTrigger value="history">История</TabsTrigger>
-        <TabsTrigger value="prices">Мои цены</TabsTrigger>
+      <TabsList className="flex flex-wrap w-full max-w-md mb-6 sm:mb-8 h-auto justify-start bg-transparent sm:bg-muted p-0 sm:p-1 gap-1">
+        <TabsTrigger value="booking" className="flex-1 min-w-[100px] border sm:border-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground text-xs sm:text-sm">Бронирование</TabsTrigger>
+        <TabsTrigger value="history" className="flex-1 min-w-[100px] border sm:border-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground text-xs sm:text-sm">История</TabsTrigger>
+        <TabsTrigger value="prices" className="flex-1 min-w-[100px] border sm:border-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:data-[state=active]:bg-background sm:data-[state=active]:text-foreground text-xs sm:text-sm">Мои цены</TabsTrigger>
       </TabsList>
 
       <TabsContent value="booking" className="space-y-6 animate-in fade-in duration-300">
-        <div className="mb-6">
-          <h2 className="text-2xl font-serif font-bold text-primary mb-2">Оформить бронирование</h2>
-          <p className="text-muted-foreground">Бронируйте экскурсии для ваших клиентов по специальным ценам.</p>
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary mb-2">Оформить бронирование</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">Бронируйте экскурсии для ваших клиентов по специальным ценам.</p>
         </div>
         <BookingWidget asPartner={true} />
       </TabsContent>
 
       <TabsContent value="history" className="space-y-6 animate-in fade-in duration-300">
-        <div className="mb-6">
-          <h2 className="text-2xl font-serif font-bold text-primary mb-2">История бронирований</h2>
-          <p className="text-muted-foreground">Все оформленные вами экскурсии.</p>
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary mb-2">История бронирований</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">Все оформленные вами экскурсии.</p>
         </div>
         
-        <Card>
+        <Card className="overflow-hidden">
           {loadingBookings ? (
             <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : !bookings?.length ? (
@@ -122,18 +122,18 @@ function PartnerDashboard() {
                   <TableRow key={b.id}>
                     <TableCell className="font-mono font-medium">{b.code}</TableCell>
                     <TableCell>
-                      {format(parseISO(b.date), 'dd.MM.yy')} <br/>
-                      <span className="text-muted-foreground text-xs">{b.startTime}</span>
+                      <span className="whitespace-nowrap">{format(parseISO(b.date), 'dd.MM.yy')}</span> <br/>
+                      <span className="text-muted-foreground text-xs whitespace-nowrap">{b.startTime}</span>
                     </TableCell>
-                    <TableCell>{b.tourName}</TableCell>
-                    <TableCell>
+                    <TableCell className="min-w-[120px]">{b.tourName}</TableCell>
+                    <TableCell className="min-w-[100px]">
                       {b.customerName}
-                      <br/><span className="text-muted-foreground text-xs">{b.phone}</span>
+                      <br/><span className="text-muted-foreground text-xs whitespace-nowrap">{b.phone}</span>
                     </TableCell>
                     <TableCell>{b.peopleCount}</TableCell>
-                    <TableCell className="font-medium">{b.totalPrice} ₽</TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">{b.totalPrice} ₽</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
                         b.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                       }`}>
                         {b.status === 'confirmed' ? 'Подтверждено' : 'Отменено'}
@@ -148,12 +148,12 @@ function PartnerDashboard() {
       </TabsContent>
 
       <TabsContent value="prices" className="space-y-6 animate-in fade-in duration-300">
-        <div className="mb-6">
-          <h2 className="text-2xl font-serif font-bold text-primary mb-2">Ваш прайс-лист</h2>
-          <p className="text-muted-foreground">Специальные цены для вашей компании.</p>
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-primary mb-2">Ваш прайс-лист</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">Специальные цены для вашей компании.</p>
         </div>
 
-        <Card>
+        <Card className="overflow-hidden">
           {loadingPrices ? (
             <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : (

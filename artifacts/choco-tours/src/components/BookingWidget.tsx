@@ -75,11 +75,11 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
   }
 
   return (
-    <div className="bg-card border rounded-xl shadow-lg p-6 flex flex-col md:flex-row gap-8">
+    <div className="bg-card border rounded-xl shadow-lg p-4 sm:p-6 flex flex-col md:flex-row gap-6 sm:gap-8">
       {/* Calendar Side */}
-      <div className="flex-1">
-        <h3 className="text-xl font-serif font-semibold mb-4 text-primary">Выберите дату</h3>
-        <div className="border rounded-lg p-2 bg-background inline-block">
+      <div className="flex-1 overflow-x-auto pb-2">
+        <h3 className="text-lg sm:text-xl font-serif font-semibold mb-4 text-primary">Выберите дату</h3>
+        <div className="border rounded-lg p-1 sm:p-2 bg-background inline-block min-w-min">
           <Calendar
             mode="single"
             selected={date}
@@ -93,8 +93,8 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
       </div>
 
       {/* Slots Side */}
-      <div className="flex-1 flex flex-col min-w-[300px]">
-        <h3 className="text-xl font-serif font-semibold mb-4 text-primary">
+      <div className="flex-1 flex flex-col min-w-0 w-full">
+        <h3 className="text-lg sm:text-xl font-serif font-semibold mb-4 text-primary">
           Время на {format(date, 'd MMMM', { locale: ru })}
         </h3>
         

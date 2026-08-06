@@ -36,23 +36,23 @@ export default function AdminBookings() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-primary mb-2">Бронирования</h1>
-          <p className="text-muted-foreground">Управление записями гостей</p>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary mb-1 sm:mb-2">Бронирования</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Управление записями гостей</p>
         </div>
       </div>
 
-      <Card className="p-4 flex gap-4 items-end bg-card shadow-sm">
-        <div className="space-y-2">
+      <Card className="p-4 flex flex-col sm:flex-row gap-4 items-end bg-card shadow-sm">
+        <div className="space-y-2 w-full sm:w-auto">
           <label className="text-sm font-medium">От даты</label>
           <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 w-full sm:w-auto">
           <label className="text-sm font-medium">До даты</label>
           <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         </div>
-        <Button variant="outline" onClick={() => { setDateFrom(""); setDateTo("") }}>
+        <Button variant="outline" onClick={() => { setDateFrom(""); setDateTo("") }} className="w-full sm:w-auto">
           Сбросить
         </Button>
       </Card>

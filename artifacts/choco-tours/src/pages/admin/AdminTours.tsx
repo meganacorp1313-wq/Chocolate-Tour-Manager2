@@ -75,12 +75,12 @@ export default function AdminTours() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-primary mb-2">Экскурсии</h1>
-          <p className="text-muted-foreground">Управление программами экскурсий</p>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary mb-1 sm:mb-2">Экскурсии</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Управление программами экскурсий</p>
         </div>
-        <Button onClick={handleCreate}><Plus className="w-4 h-4 mr-2"/> Добавить</Button>
+        <Button onClick={handleCreate} className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2"/> Добавить</Button>
       </div>
 
       <Card>
@@ -137,7 +137,7 @@ export default function AdminTours() {
               <Label>Описание</Label>
               <Textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={4} required />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Длительность (мин)</Label>
                 <Input type="number" min={1} value={form.durationMinutes} onChange={e => setForm({...form, durationMinutes: parseInt(e.target.value)})} required />

@@ -44,23 +44,23 @@ export default function BookingConfirmation() {
               <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
-              <h1 className="font-serif text-3xl md:text-4xl font-bold text-primary mb-2">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-2">
                 Ждем вас на фабрике!
               </h1>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-base sm:text-lg text-muted-foreground">
                 Ваше бронирование успешно подтверждено
               </p>
             </div>
 
             <Card className="overflow-hidden border-2 border-primary/10 shadow-lg">
-              <div className="bg-primary text-primary-foreground p-6 text-center border-b border-primary/20">
-                <p className="text-primary-foreground/80 text-sm font-medium uppercase tracking-wider mb-1">Код бронирования</p>
-                <p className="font-mono text-4xl font-bold tracking-widest">{booking.code}</p>
+              <div className="bg-primary text-primary-foreground p-4 sm:p-6 text-center border-b border-primary/20">
+                <p className="text-primary-foreground/80 text-xs sm:text-sm font-medium uppercase tracking-wider mb-1">Код бронирования</p>
+                <p className="font-mono text-3xl sm:text-4xl font-bold tracking-widest">{booking.code}</p>
               </div>
-              <CardContent className="p-8">
-                <h3 className="font-serif text-2xl font-bold mb-6 text-center">{booking.tourName}</h3>
+              <CardContent className="p-4 sm:p-8">
+                <h3 className="font-serif text-xl sm:text-2xl font-bold mb-6 text-center">{booking.tourName}</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
                   <div className="flex items-start gap-3">
                     <CalIcon className="w-5 h-5 text-accent mt-0.5" />
                     <div>

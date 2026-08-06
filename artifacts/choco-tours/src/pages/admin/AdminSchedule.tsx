@@ -41,22 +41,22 @@ export default function AdminSchedule() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-primary mb-2">Расписание</h1>
-          <p className="text-muted-foreground">Управление слотами для экскурсий</p>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary mb-1 sm:mb-2">Расписание</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Управление слотами для экскурсий</p>
         </div>
-        <Button onClick={() => setIsBulkCreating(true)}>
+        <Button onClick={() => setIsBulkCreating(true)} className="w-full sm:w-auto">
           <CalendarDays className="w-4 h-4 mr-2"/> Массовое создание
         </Button>
       </div>
 
-      <Card className="p-4 flex gap-4 items-end bg-card shadow-sm">
-        <div className="space-y-2">
+      <Card className="p-4 flex flex-col sm:flex-row gap-4 items-end bg-card shadow-sm">
+        <div className="space-y-2 w-full sm:w-auto">
           <label className="text-sm font-medium">От даты</label>
           <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} required />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 w-full sm:w-auto">
           <label className="text-sm font-medium">До даты</label>
           <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} required />
         </div>
@@ -196,7 +196,7 @@ function BulkCreateDialog({ onClose, tours, onSuccess }: { onClose: () => void, 
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>С даты</Label>
               <Input type="date" value={form.dateFrom} onChange={e => setForm({...form, dateFrom: e.target.value})} required />
@@ -209,13 +209,13 @@ function BulkCreateDialog({ onClose, tours, onSuccess }: { onClose: () => void, 
 
           <div className="space-y-2">
             <Label>Дни недели</Label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {[1,2,3,4,5,6,0].map(day => (
                 <button
                   key={day}
                   type="button"
                   onClick={() => toggleDay(day)}
-                  className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                     form.weekdays.includes(day) 
                       ? "bg-primary text-primary-foreground" 
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -227,13 +227,13 @@ function BulkCreateDialog({ onClose, tours, onSuccess }: { onClose: () => void, 
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div className="space-y-2">
               <Label>Вместимость группы</Label>
               <Input type="number" min={1} value={form.capacity} onChange={e => setForm({...form, capacity: parseInt(e.target.value)})} required />
             </div>
             <div className="space-y-2">
-              <Label>Время начала (через запятую)</Label>
+              <Label>Время (через запятую)</Label>
               <Input placeholder="10:00, 14:00" value={form.times} onChange={e => setForm({...form, times: e.target.value})} required />
               <p className="text-xs text-muted-foreground">Формат: ЧЧ:ММ</p>
             </div>
