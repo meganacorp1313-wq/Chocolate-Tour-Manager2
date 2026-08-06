@@ -24,6 +24,7 @@ import {
   fetchBookingViews,
   generateBookingCode,
 } from "../lib/bookings";
+import { sendBookingEmails } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -230,6 +231,11 @@ router.post("/bookings", async (req, res): Promise<void> => {
 
   const [view] = await fetchBookingViews({ id: booking.id });
   res.status(201).json(CreateBookingResponse.parse(view));
+
+  // Send email notifications fire-and-forget — must not block or fail the response
+  sendBookingEmails(view).catch((err) =>
+    console.error("[email] unexpected error in sendBookingEmails", err),
+  );
 });
 
 router.get("/bookings/:code", async (req, res): Promise<void> => {
