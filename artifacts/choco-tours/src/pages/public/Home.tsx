@@ -3,6 +3,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout"
 import { BookingWidget } from "@/components/BookingWidget"
 import { Loader2, Clock } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
+import { formatUsd } from "@/lib/currency"
 
 export default function Home() {
   const { data: tours, isLoading } = useListTours()
@@ -77,7 +78,7 @@ export default function Home() {
                         <Clock className="w-4 h-4" /> {tour.durationMinutes} {t("mins")}
                       </div>
                       <div className="flex items-center gap-1.5 text-accent font-bold text-lg">
-                        ${tour.basePrice}
+                        {formatUsd(tour.basePrice)}
                       </div>
                     </div>
                   </div>

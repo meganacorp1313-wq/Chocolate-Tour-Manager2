@@ -12,6 +12,7 @@ import { Loader2, KeyRound, Building2 } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
+import { formatUsd } from "@/lib/currency"
 
 function PartnerLogin() {
   const [password, setPassword] = useState("")
@@ -147,7 +148,7 @@ function PartnerDashboard() {
                       <br/><span className="text-muted-foreground text-xs whitespace-nowrap">{b.phone}</span>
                     </TableCell>
                     <TableCell>{b.peopleCount}</TableCell>
-                    <TableCell className="font-medium whitespace-nowrap">${b.totalPrice}</TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">{formatUsd(b.totalPrice)}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
                         b.status === 'confirmed' ? 'bg-green-100 text-green-700' :
@@ -190,8 +191,8 @@ function PartnerDashboard() {
                 {prices?.map(p => (
                   <TableRow key={p.tourId}>
                     <TableCell className="font-medium">{getTourName(p)}</TableCell>
-                    <TableCell className="text-muted-foreground line-through">${p.basePrice}</TableCell>
-                    <TableCell className="font-bold text-primary text-lg">${p.price}</TableCell>
+                    <TableCell className="text-muted-foreground line-through">{formatUsd(p.basePrice)}</TableCell>
+                    <TableCell className="font-bold text-primary text-lg">{formatUsd(p.price)}</TableCell>
                     <TableCell>
                       <span className="text-green-600 bg-green-50 px-2 py-1 rounded font-medium text-sm">
                         -{Math.round((1 - p.price / p.basePrice) * 100)}%

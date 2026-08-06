@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/lib/i18n"
+import { formatUsd } from "@/lib/currency"
 
 export default function BookingConfirmation() {
   const [, params] = useRoute("/booking/:code")
@@ -134,7 +135,7 @@ export default function BookingConfirmation() {
                     <Ticket className="w-5 h-5 text-accent mt-0.5" />
                     <div>
                       <p className="text-sm text-muted-foreground font-medium">{t("to_pay")}</p>
-                      <p className="font-semibold text-lg">${booking.totalPrice}</p>
+                      <p className="font-semibold text-lg">{formatUsd(booking.totalPrice)}</p>
                     </div>
                   </div>
                 </div>
