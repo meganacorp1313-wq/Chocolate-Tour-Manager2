@@ -63,7 +63,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <Building2 className="h-4 w-4" /> {t("companies")}
             </Link>
             <Link href="/admin/settings" className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground text-muted-foreground">
-              <Settings className="h-4 w-4" /> Настройки
+              <Settings className="h-4 w-4" /> {t("settings")}
             </Link>
           </nav>
         </aside>

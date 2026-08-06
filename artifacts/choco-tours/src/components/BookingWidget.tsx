@@ -36,6 +36,16 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
   const { data: slots, isLoading: loadingSlots } = useListSlots({ date: dateStr })
   const createBooking = useCreateBooking()
 
+  const translateBookingError = (err: unknown): string => {
+    const raw = typeof err === "object" && err !== null && "error" in err && typeof (err as { error?: unknown }).error === "string"
+      ? (err as { error: string }).error
+      : ""
+    if (raw === "Слот недоступен") return t("booking_error_slot_unavailable")
+    const seats = raw.match(/^Недостаточно мест: свободно (\d+)$/)
+    if (seats) return t("booking_error_not_enough_seats").replace("{n}", seats[1])
+    return t("booking_error_generic")
+  }
+
   const handleBooking = (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedSlot) return
@@ -203,6 +213,9 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
             
             <div className="pt-4 flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setSelectedSlot(null)}>{t("cancel")}</Button>
+              {createBooking.isError && (
+                <p className="text-sm text-destructive font-medium">{translateBookingError(createBooking.error)}</p>
+              )}
               <Button type="submit" disabled={createBooking.isPending}>
                 {createBooking.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 {t("book_btn")}

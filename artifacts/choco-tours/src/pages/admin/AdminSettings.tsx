@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Loader2, KeyRound, CheckCircle2 } from "lucide-react"
+import { useI18n } from "@/lib/i18n"
 
 export default function AdminSettings() {
+  const { t } = useI18n()
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -19,11 +21,11 @@ export default function AdminSettings() {
     setError("")
     setSuccess(false)
     if (newPassword.length < 6) {
-      setError("Новый пароль должен быть не короче 6 символов")
+      setError(t("password_too_short"))
       return
     }
     if (newPassword !== confirmPassword) {
-      setError("Пароли не совпадают")
+      setError(t("passwords_dont_match"))
       return
     }
     changePassword.mutate(
@@ -36,11 +38,13 @@ export default function AdminSettings() {
           setConfirmPassword("")
         },
         onError: (err) => {
-          const message =
+          const raw =
             typeof err === "object" && err !== null && "error" in err && typeof (err as { error?: unknown }).error === "string"
               ? (err as { error: string }).error
-              : "Не удалось сменить пароль"
-          setError(message)
+              : ""
+          if (raw === "Текущий пароль указан неверно") setError(t("wrong_current_password"))
+          else if (raw === "Новый пароль должен быть не короче 6 символов") setError(t("password_too_short"))
+          else setError(t("change_password_failed"))
         },
       },
     )
@@ -49,8 +53,8 @@ export default function AdminSettings() {
   return (
     <div className="space-y-6 max-w-lg">
       <div>
-        <h1 className="font-serif text-3xl font-bold text-primary">Настройки</h1>
-        <p className="text-muted-foreground mt-1">Управление доступом к админ-панели</p>
+        <h1 className="font-serif text-3xl font-bold text-primary">{t("settings")}</h1>
+        <p className="text-muted-foreground mt-1">{t("settings_desc")}</p>
       </div>
       <Card>
         <CardHeader>
@@ -59,15 +63,15 @@ export default function AdminSettings() {
               <KeyRound className="w-5 h-5" />
             </div>
             <div>
-              <CardTitle>Смена пароля</CardTitle>
-              <CardDescription>Пароль для входа в админ-панель</CardDescription>
+              <CardTitle>{t("change_password_title")}</CardTitle>
+              <CardDescription>{t("change_password_desc")}</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="current-password">Текущий пароль</Label>
+              <Label htmlFor="current-password">{t("current_password")}</Label>
               <Input
                 id="current-password"
                 type="password"
@@ -78,7 +82,7 @@ export default function AdminSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="new-password">Новый пароль</Label>
+              <Label htmlFor="new-password">{t("new_password")}</Label>
               <Input
                 id="new-password"
                 type="password"
@@ -88,10 +92,10 @@ export default function AdminSettings() {
                 required
                 minLength={6}
               />
-              <p className="text-xs text-muted-foreground">Минимум 6 символов</p>
+              <p className="text-xs text-muted-foreground">{t("min_6_chars")}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Повторите новый пароль</Label>
+              <Label htmlFor="confirm-password">{t("repeat_new_password")}</Label>
               <Input
                 id="confirm-password"
                 type="password"
@@ -104,12 +108,12 @@ export default function AdminSettings() {
             {error && <p className="text-sm text-destructive font-medium">{error}</p>}
             {success && (
               <p className="text-sm text-green-600 font-medium flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" /> Пароль изменён
+                <CheckCircle2 className="w-4 h-4" /> {t("password_changed")}
               </p>
             )}
             <Button type="submit" disabled={changePassword.isPending}>
               {changePassword.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Сменить пароль
+              {t("change_password_btn")}
             </Button>
           </form>
         </CardContent>
