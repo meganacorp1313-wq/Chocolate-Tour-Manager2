@@ -1,7 +1,13 @@
 import { ReplitConnectors } from "@replit/connectors-sdk";
 import type { BookingView } from "./bookings.js";
 
-const FROM_ADDRESS = "Шоколадная фабрика <notifications@choco-tours.ru>";
+/**
+ * Sender address. Set FROM_EMAIL in production once the domain is verified
+ * in Resend. Falls back to Resend's universal test address so the flow can
+ * be exercised before domain verification is complete.
+ */
+const FROM_ADDRESS =
+  process.env.FROM_EMAIL ?? "Шоколадная фабрика <onboarding@resend.dev>";
 /** Factory email — set FACTORY_EMAIL env var in production */
 const FACTORY_EMAIL = process.env.FACTORY_EMAIL ?? "factory@choco-tours.ru";
 
@@ -158,17 +164,39 @@ async function sendEmail(opts: {
   subject: string;
   html: string;
 }): Promise<void> {
-  const connectors = new ReplitConnectors();
-  const response = await connectors.proxy("resend", "/emails", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: FROM_ADDRESS,
-      to: [opts.to],
-      subject: opts.subject,
-      html: opts.html,
-    }),
-  });
+  // Prefer a direct RESEND_API_KEY secret when set; fall back to the
+  // Replit Connectors proxy so the integration can be used if preferred.
+  const directKey = process.env.RESEND_API_KEY;
+
+  let response: Response;
+
+  if (directKey) {
+    response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${directKey}`,
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: [opts.to],
+        subject: opts.subject,
+        html: opts.html,
+      }),
+    });
+  } else {
+    const connectors = new ReplitConnectors();
+    response = await connectors.proxy("resend", "/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: [opts.to],
+        subject: opts.subject,
+        html: opts.html,
+      }),
+    });
+  }
 
   if (!response.ok) {
     let detail = "";

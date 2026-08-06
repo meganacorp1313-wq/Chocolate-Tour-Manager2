@@ -1,4 +1,4 @@
-modules = ["nodejs-24", "postgresql-16", "python-base-3.13"]
+modules = ["nodejs-24", "python-base-3.13", "postgresql-16"]
 
 [deployment]
 router = "application"
@@ -26,4 +26,11 @@ channel = "stable-25_05"
 
 [userenv.shared]
 WHOP_COMPANY_ID = "biz_awTYdEcefaQUr5"
-WHOP_WEBHOOK_SECRET = "ws_716ee2c1c499302b596b446041f29352908ebe2e535fde906ce16145d3c9c6bf"
+
+[userenv.development]
+FACTORY_EMAIL = "delivered@resend.dev"
+FROM_EMAIL = "Fábrica 818 <info@repdom.online>"
+
+[userenv.production]
+FACTORY_EMAIL = "factory@choco-tours.ru"
+FROM_EMAIL = "Fábrica 818 <info@repdom.online>"
