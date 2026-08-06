@@ -28,9 +28,9 @@ channel = "stable-25_05"
 WHOP_COMPANY_ID = "biz_awTYdEcefaQUr5"
 
 [userenv.development]
-FACTORY_EMAIL = "delivered@resend.dev"
-FROM_EMAIL = "Fábrica 818 <info@repdom.online>"
+FACTORY_EMAIL = "arbalanseu@gmail.com"
+FROM_EMAIL = "Шоколадная фабрика <info@repdom.online>"
 
 [userenv.production]
-FACTORY_EMAIL = "factory@choco-tours.ru"
-FROM_EMAIL = "Fábrica 818 <info@repdom.online>"
+FACTORY_EMAIL = "arbalanseu@gmail.com"
+FROM_EMAIL = "Шоколадная фабрика <info@repdom.online>"
