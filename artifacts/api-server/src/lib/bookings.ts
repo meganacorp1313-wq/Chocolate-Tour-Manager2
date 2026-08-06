@@ -76,6 +76,7 @@ export interface BookingView {
   companyId: number | null;
   companyName: string | null;
   comment: string | null;
+  language: string;
   createdAt: string;
 }
 
@@ -107,6 +108,7 @@ export function toBookingView(
     companyId: booking.companyId,
     companyName,
     comment: booking.comment,
+    language: booking.language,
     createdAt: booking.createdAt.toISOString(),
   };
 }

@@ -5,6 +5,7 @@
  * Chocolate factory tours booking API
  * OpenAPI spec version: 0.1.0
  */
+import type { BookingLanguage } from './bookingLanguage';
 import type { BookingPaymentStatus } from './bookingPaymentStatus';
 import type { BookingStatus } from './bookingStatus';
 
@@ -43,5 +44,6 @@ export interface Booking {
   companyName?: string | null;
   /** @nullable */
   comment?: string | null;
+  language?: BookingLanguage;
   createdAt: string;
 }

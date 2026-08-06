@@ -140,6 +140,18 @@ export interface BulkResult {
   created: number;
 }
 
+/**
+ * Client UI language for confirmation emails; defaults to es
+ */
+export type BookingInputLanguage = typeof BookingInputLanguage[keyof typeof BookingInputLanguage];
+
+
+export const BookingInputLanguage = {
+  es: 'es',
+  en: 'en',
+  ru: 'ru',
+} as const;
+
 export interface BookingInput {
   slotId: number;
   /** @minLength 1 */
@@ -152,6 +164,8 @@ export interface BookingInput {
   peopleCount: number;
   /** @nullable */
   comment?: string | null;
+  /** Client UI language for confirmation emails; defaults to es */
+  language?: BookingInputLanguage;
 }
 
 export type BookingStatus = typeof BookingStatus[keyof typeof BookingStatus];
@@ -173,6 +187,15 @@ export type BookingPaymentStatus = typeof BookingPaymentStatus[keyof typeof Book
 export const BookingPaymentStatus = {
   pending: 'pending',
   paid: 'paid',
+} as const;
+
+export type BookingLanguage = typeof BookingLanguage[keyof typeof BookingLanguage];
+
+
+export const BookingLanguage = {
+  es: 'es',
+  en: 'en',
+  ru: 'ru',
 } as const;
 
 export interface Booking {
@@ -210,6 +233,7 @@ export interface Booking {
   companyName?: string | null;
   /** @nullable */
   comment?: string | null;
+  language?: BookingLanguage;
   createdAt: string;
 }
 

@@ -23,6 +23,7 @@ export const bookingsTable = pgTable("bookings", {
   paymentStatus: text("payment_status"), // null | pending | paid
   whopCheckoutId: text("whop_checkout_id"), // Whop checkout configuration ID
   paymentExpiresAt: timestamp("payment_expires_at", { withTimezone: true }), // when unpaid booking auto-cancels
+  language: text("language").notNull().default("es"), // es | en | ru — client UI language for emails
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

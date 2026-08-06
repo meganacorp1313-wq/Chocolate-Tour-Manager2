@@ -47,7 +47,8 @@ export function BookingWidget({ asPartner = false }: { asPartner?: boolean }) {
         phone: bookingForm.phone,
         email: bookingForm.email || undefined,
         peopleCount: bookingForm.people,
-        comment: bookingForm.comment || undefined
+        comment: bookingForm.comment || undefined,
+        language: lang
       }
     }, {
       onSuccess: (res) => {

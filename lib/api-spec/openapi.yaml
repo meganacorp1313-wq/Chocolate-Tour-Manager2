@@ -795,6 +795,7 @@ components:
         email: { type: ["string", "null"] }
         peopleCount: { type: integer, minimum: 1 }
         comment: { type: ["string", "null"] }
+        language: { type: string, enum: [es, en, ru], description: "Client UI language for confirmation emails; defaults to es" }
     Booking:
       type: object
       required: [id, code, slotId, tourName, tourNameEs, tourNameEn, date, startTime, customerName, phone, peopleCount, pricePerPerson, totalPrice, status, createdAt]
@@ -819,6 +820,7 @@ components:
         companyId: { type: ["integer", "null"] }
         companyName: { type: ["string", "null"] }
         comment: { type: ["string", "null"] }
+        language: { type: string, enum: [es, en, ru] }
         createdAt: { type: string }
     BookingStatusUpdate:
       type: object

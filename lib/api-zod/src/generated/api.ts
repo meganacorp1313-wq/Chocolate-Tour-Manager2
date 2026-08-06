@@ -89,7 +89,8 @@ export const CreateBookingBody = zod.object({
   "phone": zod.string().min(1),
   "email": zod.string().nullish(),
   "peopleCount": zod.number().int().min(1),
-  "comment": zod.string().nullish()
+  "comment": zod.string().nullish(),
+  "language": zod.enum(['es', 'en', 'ru']).optional().describe('Client UI language for confirmation emails; defaults to es')
 })
 
 export const CreateBookingResponse = zod.object({
@@ -113,6 +114,7 @@ export const CreateBookingResponse = zod.object({
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
+  "language": zod.enum(['es', 'en', 'ru']).optional(),
   "createdAt": zod.string()
 })
 
@@ -145,6 +147,7 @@ export const GetBookingByCodeResponse = zod.object({
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
+  "language": zod.enum(['es', 'en', 'ru']).optional(),
   "createdAt": zod.string()
 })
 
@@ -218,6 +221,7 @@ export const GetCompanyBookingsResponseItem = zod.object({
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
+  "language": zod.enum(['es', 'en', 'ru']).optional(),
   "createdAt": zod.string()
 })
 export const GetCompanyBookingsResponse = zod.array(GetCompanyBookingsResponseItem)
@@ -667,6 +671,7 @@ export const AdminListBookingsResponseItem = zod.object({
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
+  "language": zod.enum(['es', 'en', 'ru']).optional(),
   "createdAt": zod.string()
 })
 export const AdminListBookingsResponse = zod.array(AdminListBookingsResponseItem)
@@ -712,6 +717,7 @@ export const UpdateBookingStatusResponse = zod.object({
   "companyId": zod.number().int().nullish(),
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
+  "language": zod.enum(['es', 'en', 'ru']).optional(),
   "createdAt": zod.string()
 })
 

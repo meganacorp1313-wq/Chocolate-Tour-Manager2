@@ -5,6 +5,12 @@ const FROM_ADDRESS = "Шоколадная фабрика <notifications@choco-t
 /** Factory email — set FACTORY_EMAIL env var in production */
 const FACTORY_EMAIL = process.env.FACTORY_EMAIL ?? "factory@choco-tours.ru";
 
+type Lang = "es" | "en" | "ru";
+
+function normalizeLang(value: string): Lang {
+  return value === "en" || value === "ru" ? value : "es";
+}
+
 function esc(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "";
   return String(value)
@@ -15,8 +21,9 @@ function esc(value: string | number | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
-function formatDate(date: string): string {
+function formatDate(date: string, lang: Lang = "ru"): string {
   const [y, m, d] = date.split("-");
+  if (lang === "en") return `${m}/${d}/${y}`;
   return `${d}.${m}.${y}`;
 }
 
@@ -24,30 +31,105 @@ function formatTime(time: string): string {
   return time.slice(0, 5);
 }
 
-function formatPrice(rub: number): string {
-  return rub.toLocaleString("ru-RU") + " ₽";
+/** Prices are stored as integer USD. */
+function formatPrice(usd: number): string {
+  return "$" + usd.toLocaleString("en-US");
 }
 
-function clientHtml(b: BookingView): string {
+function tourNameFor(b: BookingView, lang: Lang): string {
+  if (lang === "es") return b.tourNameEs || b.tourName;
+  if (lang === "en") return b.tourNameEn || b.tourName;
+  return b.tourName;
+}
+
+interface ClientStrings {
+  subject: (code: string) => string;
+  title: string;
+  greeting: (name: string) => string;
+  intro: string;
+  details: string;
+  tour: string;
+  date: string;
+  start: string;
+  guests: string;
+  pricePerPerson: string;
+  total: string;
+  comment: string;
+  footer: string;
+}
+
+const CLIENT_STRINGS: Record<Lang, ClientStrings> = {
+  es: {
+    subject: (code) => `Su reserva está confirmada — código ${code}`,
+    title: "Su reserva está confirmada 🍫",
+    greeting: (name) => `¡Hola, <strong>${name}</strong>!`,
+    intro:
+      "Su reserva para la excursión se ha realizado con éxito. Guarde este código, lo necesitará a su llegada:",
+    details: "Detalles de la reserva",
+    tour: "Excursión",
+    date: "Fecha",
+    start: "Hora de inicio",
+    guests: "Número de personas",
+    pricePerPerson: "Precio por persona",
+    total: "Total",
+    comment: "Comentario",
+    footer: "Si tiene alguna pregunta, póngase en contacto con el administrador.",
+  },
+  en: {
+    subject: (code) => `Your booking is confirmed — code ${code}`,
+    title: "Your booking is confirmed 🍫",
+    greeting: (name) => `Hello, <strong>${name}</strong>!`,
+    intro:
+      "Your tour booking has been completed successfully. Keep this code — you will need it upon arrival:",
+    details: "Booking details",
+    tour: "Tour",
+    date: "Date",
+    start: "Start time",
+    guests: "Number of guests",
+    pricePerPerson: "Price per person",
+    total: "Total",
+    comment: "Comment",
+    footer: "If you have any questions, please contact the administrator.",
+  },
+  ru: {
+    subject: (code) => `Ваша бронь подтверждена — код ${code}`,
+    title: "Ваша бронь подтверждена 🍫",
+    greeting: (name) => `Здравствуйте, <strong>${name}</strong>!`,
+    intro:
+      "Бронирование на экскурсию успешно оформлено. Сохраните этот код — он понадобится при посещении:",
+    details: "Детали брони",
+    tour: "Экскурсия",
+    date: "Дата",
+    start: "Начало",
+    guests: "Количество гостей",
+    pricePerPerson: "Цена за человека",
+    total: "Итого",
+    comment: "Комментарий",
+    footer: "Если у вас есть вопросы, обратитесь к администратору.",
+  },
+};
+
+function clientHtml(b: BookingView, lang: Lang): string {
+  const s = CLIENT_STRINGS[lang];
   return `
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a">
-  <h2 style="color:#6b3a0f">Ваша бронь подтверждена 🍫</h2>
-  <p>Здравствуйте, <strong>${esc(b.customerName)}</strong>!</p>
-  <p>Бронирование на экскурсию успешно оформлено. Сохраните этот код — он понадобится при заселении:</p>
+  <h2 style="color:#6b3a0f">${s.title}</h2>
+  <p>${s.greeting(esc(b.customerName))}</p>
+  <p>${s.intro}</p>
   <div style="font-size:32px;font-weight:bold;letter-spacing:6px;text-align:center;padding:16px;background:#fdf3e7;border-radius:8px;color:#6b3a0f">
     ${esc(b.code)}
   </div>
-  <h3 style="margin-top:24px">Детали брони</h3>
+  <h3 style="margin-top:24px">${s.details}</h3>
   <table style="width:100%;border-collapse:collapse">
-    <tr><td style="padding:6px 0;color:#666">Экскурсия</td><td style="padding:6px 0"><strong>${esc(b.tourName)}</strong></td></tr>
-    <tr><td style="padding:6px 0;color:#666">Дата</td><td style="padding:6px 0">${esc(formatDate(b.date))}</td></tr>
-    <tr><td style="padding:6px 0;color:#666">Начало</td><td style="padding:6px 0">${esc(formatTime(b.startTime))}</td></tr>
-    <tr><td style="padding:6px 0;color:#666">Количество гостей</td><td style="padding:6px 0">${esc(b.peopleCount)}</td></tr>
-    <tr><td style="padding:6px 0;color:#666">Цена за человека</td><td style="padding:6px 0">${esc(formatPrice(b.pricePerPerson))}</td></tr>
-    <tr><td style="padding:6px 0;color:#666">Итого</td><td style="padding:6px 0"><strong>${esc(formatPrice(b.totalPrice))}</strong></td></tr>
-    ${b.comment ? `<tr><td style="padding:6px 0;color:#666">Комментарий</td><td style="padding:6px 0">${esc(b.comment)}</td></tr>` : ""}
+    <tr><td style="padding:6px 0;color:#666">${s.tour}</td><td style="padding:6px 0"><strong>${esc(tourNameFor(b, lang))}</strong></td></tr>
+    <tr><td style="padding:6px 0;color:#666">${s.date}</td><td style="padding:6px 0">${esc(formatDate(b.date, lang))}</td></tr>
+    <tr><td style="padding:6px 0;color:#666">${s.start}</td><td style="padding:6px 0">${esc(formatTime(b.startTime))}</td></tr>
+    <tr><td style="padding:6px 0;color:#666">${s.guests}</td><td style="padding:6px 0">${esc(b.peopleCount)}</td></tr>
+    <tr><td style="padding:6px 0;color:#666">${s.pricePerPerson}</td><td style="padding:6px 0">${esc(formatPrice(b.pricePerPerson))}</td></tr>
+    <tr><td style="padding:6px 0;color:#666">${s.total}</td><td style="padding:6px 0"><strong>${esc(formatPrice(b.totalPrice))}</strong></td></tr>
+    ${b.comment ? `<tr><td style="padding:6px 0;color:#666">${s.comment}</td><td style="padding:6px 0">${esc(b.comment)}</td></tr>` : ""}
   </table>
-  <p style="margin-top:24px;color:#666;font-size:13px">Если у вас есть вопросы, обратитесь к администратору.</p>
+  <p style="margin-top:24px;color:#666;font-size:13px">${s.footer}</p>
 </div>`;
 }
 
@@ -64,6 +146,7 @@ function factoryHtml(b: BookingView): string {
     ${b.email ? `<tr><td style="padding:6px 0;color:#666">Email</td><td style="padding:6px 0">${esc(b.email)}</td></tr>` : ""}
     <tr><td style="padding:6px 0;color:#666">Гостей</td><td style="padding:6px 0">${esc(b.peopleCount)}</td></tr>
     <tr><td style="padding:6px 0;color:#666">Итого</td><td style="padding:6px 0"><strong>${esc(formatPrice(b.totalPrice))}</strong></td></tr>
+    <tr><td style="padding:6px 0;color:#666">Язык клиента</td><td style="padding:6px 0">${esc(b.language)}</td></tr>
     ${b.companyName ? `<tr><td style="padding:6px 0;color:#666">Партнёр</td><td style="padding:6px 0">${esc(b.companyName)}</td></tr>` : ""}
     ${b.comment ? `<tr><td style="padding:6px 0;color:#666">Комментарий</td><td style="padding:6px 0">${esc(b.comment)}</td></tr>` : ""}
   </table>
@@ -103,10 +186,12 @@ async function sendEmail(opts: {
 
 /**
  * Send booking confirmation emails to the client (if email provided) and
- * to the factory. Errors are caught and logged — email failure must NOT
- * block the booking response.
+ * to the factory. The client email is sent in the client's UI language
+ * (es/en/ru); the factory email stays in Russian. Errors are caught and
+ * logged — email failure must NOT block the booking response.
  */
 export async function sendBookingEmails(booking: BookingView): Promise<void> {
+  const lang = normalizeLang(booking.language);
   const safeCode = booking.code.replace(/[^A-Z0-9]/g, "");
   const safeTourName = booking.tourName.replace(/[\r\n]/g, " ");
   const safeDate = formatDate(booking.date);
@@ -117,8 +202,8 @@ export async function sendBookingEmails(booking: BookingView): Promise<void> {
     tasks.push(
       sendEmail({
         to: booking.email,
-        subject: `Ваша бронь подтверждена — код ${safeCode}`,
-        html: clientHtml(booking),
+        subject: CLIENT_STRINGS[lang].subject(safeCode),
+        html: clientHtml(booking, lang),
       }).catch((err) =>
         console.error("[email] failed to send client confirmation", err),
       ),

@@ -13,6 +13,8 @@ export * from './adminPasswordChangeInput';
 export * from './adminSummary';
 export * from './booking';
 export * from './bookingInput';
+export * from './bookingInputLanguage';
+export * from './bookingLanguage';
 export * from './bookingPaymentStatus';
 export * from './bookingStatus';
 export * from './bookingStatusUpdate';

@@ -254,6 +254,7 @@ router.post("/bookings", async (req, res): Promise<void> => {
       paymentStatus: requiresPayment ? "pending" : null,
       paymentExpiresAt,
       comment: data.comment ?? null,
+      language: data.language ?? "es",
     })
     .returning();
 

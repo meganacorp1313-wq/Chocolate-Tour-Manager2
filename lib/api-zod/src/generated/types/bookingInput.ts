@@ -5,6 +5,7 @@
  * Chocolate factory tours booking API
  * OpenAPI spec version: 0.1.0
  */
+import type { BookingInputLanguage } from './bookingInputLanguage';
 
 export interface BookingInput {
   slotId: number;
@@ -18,4 +19,6 @@ export interface BookingInput {
   peopleCount: number;
   /** @nullable */
   comment?: string | null;
+  /** Client UI language for confirmation emails; defaults to es */
+  language?: BookingInputLanguage;
 }
