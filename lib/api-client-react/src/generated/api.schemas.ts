@@ -198,6 +198,18 @@ export const BookingLanguage = {
   ru: 'ru',
 } as const;
 
+/**
+ * null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed
+ * @nullable
+ */
+export type BookingEmailStatus = typeof BookingEmailStatus[keyof typeof BookingEmailStatus] | null;
+
+
+export const BookingEmailStatus = {
+  sent: 'sent',
+  failed: 'failed',
+} as const;
+
 export interface Booking {
   id: number;
   /** Confirmation code */
@@ -234,6 +246,16 @@ export interface Booking {
   /** @nullable */
   comment?: string | null;
   language?: BookingLanguage;
+  /**
+     * null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed
+     * @nullable
+     */
+  emailStatus?: BookingEmailStatus;
+  /**
+     * Details of the last email failure, cleared on success
+     * @nullable
+     */
+  emailError?: string | null;
   createdAt: string;
 }
 

@@ -2,8 +2,7 @@ import { Router, type IRouter, type Request } from "express";
 import { createHmac, timingSafeEqual } from "crypto";
 import { eq } from "drizzle-orm";
 import { db, bookingsTable } from "@workspace/db";
-import { fetchBookingViews } from "../lib/bookings";
-import { sendBookingEmails } from "../lib/email";
+import { fetchBookingViews, dispatchBookingEmails } from "../lib/bookings";
 
 const router: IRouter = Router();
 
@@ -137,12 +136,12 @@ router.post("/whop/webhook", async (req, res): Promise<void> => {
 
     res.json({ ok: true });
 
-    // Send confirmation emails after response is sent (fire-and-forget)
+    // Send confirmation emails after response is sent (fire-and-forget).
+    // dispatchBookingEmails records success/failure on the booking row so
+    // failed emails surface in the admin panel instead of only in logs.
     const [view] = await fetchBookingViews({ id: booking.id });
     if (view) {
-      sendBookingEmails(view).catch((err) =>
-        console.error("[email] failed to send post-payment emails", err),
-      );
+      void dispatchBookingEmails(view);
     }
   } catch (err) {
     console.error("Whop webhook error:", err);

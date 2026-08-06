@@ -115,6 +115,8 @@ export const CreateBookingResponse = zod.object({
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
   "language": zod.enum(['es', 'en', 'ru']).optional(),
+  "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
+  "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
   "createdAt": zod.string()
 })
 
@@ -148,6 +150,8 @@ export const GetBookingByCodeResponse = zod.object({
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
   "language": zod.enum(['es', 'en', 'ru']).optional(),
+  "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
+  "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
   "createdAt": zod.string()
 })
 
@@ -222,6 +226,8 @@ export const GetCompanyBookingsResponseItem = zod.object({
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
   "language": zod.enum(['es', 'en', 'ru']).optional(),
+  "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
+  "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
   "createdAt": zod.string()
 })
 export const GetCompanyBookingsResponse = zod.array(GetCompanyBookingsResponseItem)
@@ -672,6 +678,8 @@ export const AdminListBookingsResponseItem = zod.object({
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
   "language": zod.enum(['es', 'en', 'ru']).optional(),
+  "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
+  "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
   "createdAt": zod.string()
 })
 export const AdminListBookingsResponse = zod.array(AdminListBookingsResponseItem)
@@ -682,6 +690,41 @@ export const AdminListBookingsResponse = zod.array(AdminListBookingsResponseItem
  */
 export const ExpireUnpaidBookingsResponse = zod.object({
   "cancelled": zod.number().int()
+})
+
+
+/**
+ * @summary Re-send confirmation emails for a booking and record the outcome
+ */
+export const ResendBookingEmailsParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const ResendBookingEmailsResponse = zod.object({
+  "id": zod.number().int(),
+  "code": zod.string().describe('Confirmation code'),
+  "slotId": zod.number().int(),
+  "tourName": zod.string().describe('Russian name'),
+  "tourNameEs": zod.string(),
+  "tourNameEn": zod.string(),
+  "date": zod.string(),
+  "startTime": zod.string(),
+  "customerName": zod.string(),
+  "phone": zod.string(),
+  "email": zod.string().nullish(),
+  "peopleCount": zod.number().int(),
+  "pricePerPerson": zod.number().int(),
+  "totalPrice": zod.number().int(),
+  "status": zod.enum(['confirmed', 'cancelled', 'pending_payment']),
+  "paymentStatus": zod.union([zod.literal('pending'),zod.literal('paid'),zod.literal(null)]).nullish().describe('null = no online payment (company booking); pending = awaiting payment; paid = paid online'),
+  "checkoutUrl": zod.string().nullish().describe('Whop hosted checkout URL, present only on fresh retail bookings'),
+  "companyId": zod.number().int().nullish(),
+  "companyName": zod.string().nullish(),
+  "comment": zod.string().nullish(),
+  "language": zod.enum(['es', 'en', 'ru']).optional(),
+  "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
+  "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
+  "createdAt": zod.string()
 })
 
 
@@ -718,6 +761,8 @@ export const UpdateBookingStatusResponse = zod.object({
   "companyName": zod.string().nullish(),
   "comment": zod.string().nullish(),
   "language": zod.enum(['es', 'en', 'ru']).optional(),
+  "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
+  "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
   "createdAt": zod.string()
 })
 

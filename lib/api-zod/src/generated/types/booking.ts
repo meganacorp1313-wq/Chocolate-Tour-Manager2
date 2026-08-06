@@ -5,6 +5,7 @@
  * Chocolate factory tours booking API
  * OpenAPI spec version: 0.1.0
  */
+import type { BookingEmailStatus } from './bookingEmailStatus';
 import type { BookingLanguage } from './bookingLanguage';
 import type { BookingPaymentStatus } from './bookingPaymentStatus';
 import type { BookingStatus } from './bookingStatus';
@@ -45,5 +46,15 @@ export interface Booking {
   /** @nullable */
   comment?: string | null;
   language?: BookingLanguage;
+  /**
+     * null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed
+     * @nullable
+     */
+  emailStatus?: BookingEmailStatus;
+  /**
+     * Details of the last email failure, cleared on success
+     * @nullable
+     */
+  emailError?: string | null;
   createdAt: string;
 }

@@ -24,8 +24,8 @@ import {
   fetchBookingViews,
   generateBookingCode,
   expireStaleBookings,
+  dispatchBookingEmails,
 } from "../lib/bookings";
-import { sendBookingEmails } from "../lib/email";
 import { getWhopClient } from "../lib/whopClient";
 
 const router: IRouter = Router();
@@ -330,9 +330,7 @@ router.post("/bookings", async (req, res): Promise<void> => {
   // Send email notifications for company bookings (confirmed immediately).
   // Retail bookings get an email from the Whop webhook after payment succeeds.
   if (!requiresPayment) {
-    sendBookingEmails(view).catch((err) =>
-      console.error("[email] unexpected error in sendBookingEmails", err),
-    );
+    void dispatchBookingEmails(view);
   }
 });
 

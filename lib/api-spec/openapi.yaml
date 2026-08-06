@@ -644,6 +644,29 @@ paths:
                 required: [cancelled]
                 properties:
                   cancelled: { type: integer }
+  /admin/bookings/{id}/resend-email:
+    post:
+      operationId: resendBookingEmails
+      tags: [admin]
+      summary: Re-send confirmation emails for a booking and record the outcome
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Booking with refreshed email status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
   /admin/bookings/{id}:
     patch:
       operationId: updateBookingStatus
@@ -821,6 +844,8 @@ components:
         companyName: { type: ["string", "null"] }
         comment: { type: ["string", "null"] }
         language: { type: string, enum: [es, en, ru] }
+        emailStatus: { type: ["string", "null"], enum: [sent, failed, null], description: "null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed" }
+        emailError: { type: ["string", "null"], description: "Details of the last email failure, cleared on success" }
         createdAt: { type: string }
     BookingStatusUpdate:
       type: object

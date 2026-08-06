@@ -2544,6 +2544,77 @@ export const useExpireUnpaidBookings = <TError = ErrorType<unknown>,
       return useMutation(getExpireUnpaidBookingsMutationOptions(options));
     }
 
+export const getResendBookingEmailsUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/bookings/${id}/resend-email`
+}
+
+/**
+ * @summary Re-send confirmation emails for a booking and record the outcome
+ */
+export const resendBookingEmails = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<Booking> => {
+
+  return customFetch<Booking>(getResendBookingEmailsUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getResendBookingEmailsMutationOptions = <TError = ErrorType<ErrorMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendBookingEmails>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resendBookingEmails>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['resendBookingEmails'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendBookingEmails>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  resendBookingEmails(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResendBookingEmailsMutationResult = NonNullable<Awaited<ReturnType<typeof resendBookingEmails>>>
+
+    export type ResendBookingEmailsMutationError = ErrorType<ErrorMessage>
+
+    /**
+ * @summary Re-send confirmation emails for a booking and record the outcome
+ */
+export const useResendBookingEmails = <TError = ErrorType<ErrorMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendBookingEmails>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof resendBookingEmails>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getResendBookingEmailsMutationOptions(options));
+    }
+
 export const getUpdateBookingStatusUrl = (id: number,) => {
 
 

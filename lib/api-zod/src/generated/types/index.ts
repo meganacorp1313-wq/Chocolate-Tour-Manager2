@@ -12,6 +12,7 @@ export * from './adminLoginInput';
 export * from './adminPasswordChangeInput';
 export * from './adminSummary';
 export * from './booking';
+export * from './bookingEmailStatus';
 export * from './bookingInput';
 export * from './bookingInputLanguage';
 export * from './bookingLanguage';

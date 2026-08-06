@@ -1,11 +1,11 @@
 import { useState } from "react"
-import { useAdminListBookings, useUpdateBookingStatus, getAdminListBookingsQueryKey } from "@workspace/api-client-react"
+import { useAdminListBookings, useUpdateBookingStatus, useResendBookingEmails, getAdminListBookingsQueryKey } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Card } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Search, CheckCircle2, XCircle } from "lucide-react"
+import { Loader2, Search, CheckCircle2, XCircle, MailWarning, MailCheck, RotateCw } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { useI18n } from "@/lib/i18n"
 
@@ -20,6 +20,8 @@ export default function AdminBookings() {
 
   const { data: bookings, isLoading } = useAdminListBookings(params)
   const updateStatus = useUpdateBookingStatus()
+  const resendEmails = useResendBookingEmails()
+  const [resendingId, setResendingId] = useState<number | null>(null)
   const queryClient = useQueryClient()
   const { t, dateLocale, lang } = useI18n()
 
@@ -32,6 +34,19 @@ export default function AdminBookings() {
           return old.map((b: any) => b.id === id ? { ...b, status } : b)
         })
       }
+    })
+  }
+
+  const handleResend = (id: number) => {
+    setResendingId(id)
+    resendEmails.mutate({ id }, {
+      onSuccess: (updated) => {
+        queryClient.setQueryData(getAdminListBookingsQueryKey(params), (old: any) => {
+          if (!old) return old
+          return old.map((b: any) => b.id === id ? { ...b, emailStatus: updated.emailStatus, emailError: updated.emailError } : b)
+        })
+      },
+      onSettled: () => setResendingId(null)
     })
   }
 
@@ -80,6 +95,7 @@ export default function AdminBookings() {
                 <TableHead>{t("col_source")}</TableHead>
                 <TableHead>{t("col_amount")}</TableHead>
                 <TableHead>{t("col_status")}</TableHead>
+                <TableHead>{t("col_email")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -115,6 +131,36 @@ export default function AdminBookings() {
                        b.status === 'pending_payment' ? t("status_pending_payment") : 
                        t("status_cancelled")}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    {b.emailStatus === 'failed' ? (
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 whitespace-nowrap"
+                          title={b.emailError ?? undefined}
+                        >
+                          <MailWarning className="w-3.5 h-3.5" /> {t("email_failed")}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          disabled={resendingId === b.id}
+                          onClick={() => handleResend(b.id)}
+                          title={t("btn_resend_email")}
+                        >
+                          {resendingId === b.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <RotateCw className="w-3.5 h-3.5" />}
+                        </Button>
+                      </div>
+                    ) : b.emailStatus === 'sent' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700 whitespace-nowrap">
+                        <MailCheck className="w-3.5 h-3.5" /> {t("email_sent")}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{t("email_pending")}</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">

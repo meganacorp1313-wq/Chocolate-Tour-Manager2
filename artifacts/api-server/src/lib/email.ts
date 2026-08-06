@@ -212,18 +212,30 @@ async function sendEmail(opts: {
   }
 }
 
+export interface EmailSendResult {
+  /** true when every attempted email was delivered to Resend successfully */
+  ok: boolean;
+  /** Human-readable description of what failed (empty when ok) */
+  errors: string[];
+}
+
 /**
  * Send booking confirmation emails to the client (if email provided) and
  * to the factory. The client email is sent in the client's UI language
  * (es/en/ru); the factory email stays in Russian. Errors are caught and
- * logged — email failure must NOT block the booking response.
+ * reported in the returned result — email failure must NOT block the
+ * booking response, but callers are expected to record the outcome
+ * (see recordEmailOutcome in routes) so failures are not silent.
  */
-export async function sendBookingEmails(booking: BookingView): Promise<void> {
+export async function sendBookingEmails(
+  booking: BookingView,
+): Promise<EmailSendResult> {
   const lang = normalizeLang(booking.language);
   const safeCode = booking.code.replace(/[^A-Z0-9]/g, "");
   const safeTourName = booking.tourName.replace(/[\r\n]/g, " ");
   const safeDate = formatDate(booking.date);
 
+  const errors: string[] = [];
   const tasks: Promise<void>[] = [];
 
   if (booking.email) {
@@ -232,9 +244,12 @@ export async function sendBookingEmails(booking: BookingView): Promise<void> {
         to: booking.email,
         subject: CLIENT_STRINGS[lang].subject(safeCode),
         html: clientHtml(booking, lang),
-      }).catch((err) =>
-        console.error("[email] failed to send client confirmation", err),
-      ),
+      }).catch((err) => {
+        console.error("[email] failed to send client confirmation", err);
+        errors.push(
+          `client confirmation: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }),
     );
   }
 
@@ -243,10 +258,14 @@ export async function sendBookingEmails(booking: BookingView): Promise<void> {
       to: FACTORY_EMAIL,
       subject: `Новая бронь ${safeCode} — ${safeTourName} ${safeDate}`,
       html: factoryHtml(booking),
-    }).catch((err) =>
-      console.error("[email] failed to send factory notification", err),
-    ),
+    }).catch((err) => {
+      console.error("[email] failed to send factory notification", err);
+      errors.push(
+        `factory notification: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }),
   );
 
   await Promise.all(tasks);
+  return { ok: errors.length === 0, errors };
 }

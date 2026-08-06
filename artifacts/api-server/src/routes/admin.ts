@@ -61,6 +61,8 @@ import {
   ChangeAdminPasswordBody,
   ChangeAdminPasswordResponse,
   ExpireUnpaidBookingsResponse,
+  ResendBookingEmailsParams,
+  ResendBookingEmailsResponse,
 } from "@workspace/api-zod";
 import {
   readSession,
@@ -72,6 +74,7 @@ import {
   bookedSeatsBySlot,
   fetchBookingViews,
   expireStaleBookings,
+  dispatchBookingEmails,
 } from "../lib/bookings";
 import { hashPassword, verifyPassword, isHashedPassword } from "../lib/password";
 
@@ -688,6 +691,27 @@ router.patch(
     }
     const [view] = await fetchBookingViews({ id: booking.id });
     res.json(UpdateBookingStatusResponse.parse(view));
+  },
+);
+
+// Re-send confirmation emails for a booking and record the outcome
+router.post(
+  "/admin/bookings/:id/resend-email",
+  requireAdmin,
+  async (req, res): Promise<void> => {
+    const params = ResendBookingEmailsParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: "Некорректные данные" });
+      return;
+    }
+    const [view] = await fetchBookingViews({ id: params.data.id });
+    if (!view) {
+      res.status(404).json({ error: "Бронирование не найдено" });
+      return;
+    }
+    await dispatchBookingEmails(view);
+    const [updated] = await fetchBookingViews({ id: params.data.id });
+    res.json(ResendBookingEmailsResponse.parse(updated));
   },
 );
 

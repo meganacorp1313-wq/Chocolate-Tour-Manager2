@@ -55,6 +55,44 @@ export function generateBookingCode(): string {
   return code;
 }
 
+/**
+ * Send booking emails and persist the outcome on the booking row so
+ * failures are visible in the admin panel instead of only in server logs.
+ * Never throws — safe to call fire-and-forget.
+ */
+export async function dispatchBookingEmails(view: BookingView): Promise<void> {
+  try {
+    const { sendBookingEmails } = await import("./email.js");
+    const result = await sendBookingEmails(view);
+    await db
+      .update(bookingsTable)
+      .set(
+        result.ok
+          ? { emailStatus: "sent", emailError: null }
+          : {
+              emailStatus: "failed",
+              emailError: result.errors.join("; ").slice(0, 1000),
+            },
+      )
+      .where(eq(bookingsTable.id, view.id));
+  } catch (err) {
+    console.error("[email] unexpected error dispatching booking emails", err);
+    await db
+      .update(bookingsTable)
+      .set({
+        emailStatus: "failed",
+        emailError: (err instanceof Error ? err.message : String(err)).slice(
+          0,
+          1000,
+        ),
+      })
+      .where(eq(bookingsTable.id, view.id))
+      .catch((dbErr) =>
+        console.error("[email] failed to record email failure", dbErr),
+      );
+  }
+}
+
 export interface BookingView {
   id: number;
   code: string;
@@ -77,6 +115,8 @@ export interface BookingView {
   companyName: string | null;
   comment: string | null;
   language: string;
+  emailStatus: string | null;
+  emailError: string | null;
   createdAt: string;
 }
 
@@ -109,6 +149,8 @@ export function toBookingView(
     companyName,
     comment: booking.comment,
     language: booking.language,
+    emailStatus: booking.emailStatus ?? null,
+    emailError: booking.emailError ?? null,
     createdAt: booking.createdAt.toISOString(),
   };
 }
