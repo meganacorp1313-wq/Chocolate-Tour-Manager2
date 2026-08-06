@@ -1,0 +1,1 @@
+- [Orval zod version detection](orval-zod-version.md) — orval emits zod v4 syntax unless `zod` is a dep of `lib/api-spec`; keep `"zod": "catalog:"` there.

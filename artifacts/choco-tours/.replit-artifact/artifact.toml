@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Экскурсии на шоколадную фабрику"
+description = "A booking website for a chocolate factory's guided tours. Retail customers can browse tours, check an availability calendar, and book visits. Tour companies log in with their own password to see company-specific price lists and book at negotiated rates. An admin panel manages the schedule, timings, capacity, companies, and price lists."
+version = "1.0.0"
+id = "artifacts/choco-tours"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18470
+
+[services.development]
+run = "pnpm --filter @workspace/choco-tours run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/choco-tours", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/choco-tours/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18470"
+BASE_PATH = "/"

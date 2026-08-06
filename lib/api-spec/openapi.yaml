@@ -3,20 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Chocolate factory tours booking API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: public
+  - name: company
+  - name: admin
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +25,813 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /tours:
+    get:
+      operationId: listTours
+      tags: [public]
+      summary: List active tours (prices are company-specific if logged in as company)
+      responses:
+        "200":
+          description: Tours
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tour"
+  /availability:
+    get:
+      operationId: getAvailability
+      tags: [public]
+      summary: Days with available slots for a month
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema: { type: string, description: "YYYY-MM" }
+      responses:
+        "200":
+          description: Availability by day
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DayAvailability"
+  /slots:
+    get:
+      operationId: listSlots
+      tags: [public]
+      summary: Time slots for a specific date with remaining seats
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, description: "YYYY-MM-DD" }
+      responses:
+        "200":
+          description: Slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Slot"
+  /bookings:
+    post:
+      operationId: createBooking
+      tags: [public]
+      summary: Create a booking (retail or as logged-in company)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: Not enough seats or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /bookings/{code}:
+    get:
+      operationId: getBookingByCode
+      tags: [public]
+      summary: Look up a booking by confirmation code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /company/login:
+    post:
+      operationId: companyLogin
+      tags: [company]
+      summary: Company login with company password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyLoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanySession"
+        "401":
+          description: Invalid password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /company/logout:
+    post:
+      operationId: companyLogout
+      tags: [company]
+      summary: Company logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+  /company/me:
+    get:
+      operationId: getCompanySession
+      tags: [company]
+      summary: Current company session
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanySession"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /company/prices:
+    get:
+      operationId: getCompanyPrices
+      tags: [company]
+      summary: Price list of the logged-in company
+      responses:
+        "200":
+          description: Prices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CompanyPrice"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /company/bookings:
+    get:
+      operationId: getCompanyBookings
+      tags: [company]
+      summary: Bookings made by the logged-in company
+      responses:
+        "200":
+          description: Bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+        "401":
+          description: Invalid password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /admin/logout:
+    post:
+      operationId: adminLogout
+      tags: [admin]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+  /admin/me:
+    get:
+      operationId: getAdminSession
+      tags: [admin]
+      summary: Check admin session
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+        "401":
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /admin/summary:
+    get:
+      operationId: getAdminSummary
+      tags: [admin]
+      summary: Dashboard summary (bookings today, upcoming, occupancy, revenue)
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSummary"
+  /admin/tours:
+    get:
+      operationId: adminListTours
+      tags: [admin]
+      summary: List all tours incl. inactive
+      responses:
+        "200":
+          description: Tours
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tour"
+    post:
+      operationId: createTour
+      tags: [admin]
+      summary: Create tour
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TourInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tour"
+  /admin/tours/{id}:
+    patch:
+      operationId: updateTour
+      tags: [admin]
+      summary: Update tour
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TourUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tour"
+    delete:
+      operationId: deleteTour
+      tags: [admin]
+      summary: Delete tour
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+  /admin/slots:
+    get:
+      operationId: adminListSlots
+      tags: [admin]
+      summary: List slots in a date range
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, description: "YYYY-MM-DD" }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, description: "YYYY-MM-DD" }
+      responses:
+        "200":
+          description: Slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Slot"
+    post:
+      operationId: createSlot
+      tags: [admin]
+      summary: Create a single slot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SlotInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Slot"
+  /admin/slots/bulk:
+    post:
+      operationId: createSlotsBulk
+      tags: [admin]
+      summary: Generate slots for a date range with weekly pattern and timings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SlotBulkInput"
+      responses:
+        "201":
+          description: Number of slots created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkResult"
+  /admin/slots/{id}:
+    patch:
+      operationId: updateSlot
+      tags: [admin]
+      summary: Update slot (time, capacity, blocked)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SlotUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Slot"
+    delete:
+      operationId: deleteSlot
+      tags: [admin]
+      summary: Delete slot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+        "400":
+          description: Slot has bookings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /admin/companies:
+    get:
+      operationId: adminListCompanies
+      tags: [admin]
+      summary: List tour companies
+      responses:
+        "200":
+          description: Companies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Company"
+    post:
+      operationId: createCompany
+      tags: [admin]
+      summary: Create company with its password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "400":
+          description: Password already used
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /admin/companies/{id}:
+    patch:
+      operationId: updateCompany
+      tags: [admin]
+      summary: Update company (name, password, active)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+    delete:
+      operationId: deleteCompany
+      tags: [admin]
+      summary: Delete company
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+  /admin/companies/{id}/prices:
+    get:
+      operationId: getCompanyPriceList
+      tags: [admin]
+      summary: Get a company's price list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Prices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CompanyPrice"
+    put:
+      operationId: setCompanyPriceList
+      tags: [admin]
+      summary: Replace a company's price list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyPriceListInput"
+      responses:
+        "200":
+          description: Updated prices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CompanyPrice"
+  /admin/bookings:
+    get:
+      operationId: adminListBookings
+      tags: [admin]
+      summary: List bookings (optionally filter by date range)
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema: { type: string, description: "YYYY-MM-DD" }
+        - name: to
+          in: query
+          required: false
+          schema: { type: string, description: "YYYY-MM-DD" }
+      responses:
+        "200":
+          description: Bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+  /admin/bookings/{id}:
+    patch:
+      operationId: updateBookingStatus
+      tags: [admin]
+      summary: Update booking status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingStatusUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
-      required:
-        - status
-
+        status: { type: string }
+      required: [status]
+    OkStatus:
+      type: object
+      properties:
+        ok: { type: boolean }
+      required: [ok]
+    ErrorMessage:
+      type: object
+      properties:
+        error: { type: string }
+      required: [error]
+    Tour:
+      type: object
+      required: [id, name, description, durationMinutes, basePrice, active]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        durationMinutes: { type: integer }
+        basePrice: { type: integer, description: "Retail price per person, RUB" }
+        companyPrice: { type: ["integer", "null"], description: "Price for the logged-in company if any" }
+        imageUrl: { type: ["string", "null"] }
+        active: { type: boolean }
+    TourInput:
+      type: object
+      required: [name, description, durationMinutes, basePrice]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        durationMinutes: { type: integer, minimum: 1 }
+        basePrice: { type: integer, minimum: 0 }
+        imageUrl: { type: ["string", "null"] }
+        active: { type: boolean }
+    TourUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        durationMinutes: { type: integer, minimum: 1 }
+        basePrice: { type: integer, minimum: 0 }
+        imageUrl: { type: ["string", "null"] }
+        active: { type: boolean }
+    DayAvailability:
+      type: object
+      required: [date, totalSeats, availableSeats, slotCount]
+      properties:
+        date: { type: string, description: "YYYY-MM-DD" }
+        totalSeats: { type: integer }
+        availableSeats: { type: integer }
+        slotCount: { type: integer }
+    Slot:
+      type: object
+      required: [id, tourId, tourName, date, startTime, capacity, bookedSeats, availableSeats, blocked]
+      properties:
+        id: { type: integer }
+        tourId: { type: integer }
+        tourName: { type: string }
+        date: { type: string, description: "YYYY-MM-DD" }
+        startTime: { type: string, description: "HH:MM" }
+        capacity: { type: integer }
+        bookedSeats: { type: integer }
+        availableSeats: { type: integer }
+        blocked: { type: boolean }
+    SlotInput:
+      type: object
+      required: [tourId, date, startTime, capacity]
+      properties:
+        tourId: { type: integer }
+        date: { type: string }
+        startTime: { type: string }
+        capacity: { type: integer, minimum: 1 }
+    SlotUpdate:
+      type: object
+      properties:
+        startTime: { type: string }
+        capacity: { type: integer, minimum: 1 }
+        blocked: { type: boolean }
+    SlotBulkInput:
+      type: object
+      required: [tourId, dateFrom, dateTo, weekdays, times, capacity]
+      properties:
+        tourId: { type: integer }
+        dateFrom: { type: string, description: "YYYY-MM-DD" }
+        dateTo: { type: string, description: "YYYY-MM-DD" }
+        weekdays:
+          type: array
+          items: { type: integer, minimum: 0, maximum: 6 }
+          description: "Days of week, 0=Sunday ... 6=Saturday"
+        times:
+          type: array
+          items: { type: string }
+          description: "Start times HH:MM"
+        capacity: { type: integer, minimum: 1 }
+    BulkResult:
+      type: object
+      required: [created]
+      properties:
+        created: { type: integer }
+    BookingInput:
+      type: object
+      required: [slotId, customerName, phone, peopleCount]
+      properties:
+        slotId: { type: integer }
+        customerName: { type: string, minLength: 1 }
+        phone: { type: string, minLength: 1 }
+        email: { type: ["string", "null"] }
+        peopleCount: { type: integer, minimum: 1 }
+        comment: { type: ["string", "null"] }
+    Booking:
+      type: object
+      required: [id, code, slotId, tourName, date, startTime, customerName, phone, peopleCount, pricePerPerson, totalPrice, status, createdAt]
+      properties:
+        id: { type: integer }
+        code: { type: string, description: "Confirmation code" }
+        slotId: { type: integer }
+        tourName: { type: string }
+        date: { type: string }
+        startTime: { type: string }
+        customerName: { type: string }
+        phone: { type: string }
+        email: { type: ["string", "null"] }
+        peopleCount: { type: integer }
+        pricePerPerson: { type: integer }
+        totalPrice: { type: integer }
+        status: { type: string, enum: [confirmed, cancelled] }
+        companyId: { type: ["integer", "null"] }
+        companyName: { type: ["string", "null"] }
+        comment: { type: ["string", "null"] }
+        createdAt: { type: string }
+    BookingStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [confirmed, cancelled] }
+    CompanyLoginInput:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, minLength: 1 }
+    AdminLoginInput:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, minLength: 1 }
+    CompanySession:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+    Company:
+      type: object
+      required: [id, name, password, active, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        contactEmail: { type: ["string", "null"] }
+        password: { type: string }
+        active: { type: boolean }
+        createdAt: { type: string }
+    CompanyInput:
+      type: object
+      required: [name, password]
+      properties:
+        name: { type: string, minLength: 1 }
+        contactEmail: { type: ["string", "null"] }
+        password: { type: string, minLength: 4 }
+        active: { type: boolean }
+    CompanyUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        contactEmail: { type: ["string", "null"] }
+        password: { type: string, minLength: 4 }
+        active: { type: boolean }
+    CompanyPrice:
+      type: object
+      required: [tourId, tourName, basePrice, price]
+      properties:
+        tourId: { type: integer }
+        tourName: { type: string }
+        basePrice: { type: integer }
+        price: { type: integer }
+    CompanyPriceItemInput:
+      type: object
+      required: [tourId, price]
+      properties:
+        tourId: { type: integer }
+        price: { type: integer, minimum: 0 }
+    CompanyPriceListInput:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyPriceItemInput"
+    AdminSummary:
+      type: object
+      required: [bookingsToday, seatsBookedToday, upcomingBookings, revenueThisMonth, occupancyNext7Days, activeCompanies]
+      properties:
+        bookingsToday: { type: integer }
+        seatsBookedToday: { type: integer }
+        upcomingBookings: { type: integer }
+        revenueThisMonth: { type: integer }
+        occupancyNext7Days: { type: number, description: "0..1 share of seats booked" }
+        activeCompanies: { type: integer }
