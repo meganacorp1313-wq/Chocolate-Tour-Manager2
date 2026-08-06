@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { retryFailedBookingEmails } from "./lib/bookings";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +23,18 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Background scheduler: retry failed booking emails independently of
+  // HTTP traffic. 60s tick is well below the shortest (2 min) backoff.
+  const EMAIL_RETRY_INTERVAL_MS = Number(
+    process.env.EMAIL_RETRY_INTERVAL_MS ?? 60 * 1000,
+  );
+  // Initial pass shortly after startup to pick up any backlog.
+  setTimeout(() => {
+    logger.info("Email retry scheduler: initial pass");
+    void retryFailedBookingEmails();
+  }, 5 * 1000).unref();
+  setInterval(() => {
+    void retryFailedBookingEmails();
+  }, EMAIL_RETRY_INTERVAL_MS).unref();
 });

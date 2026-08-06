@@ -1,1 +1,2 @@
 - [Orval zod version detection](orval-zod-version.md) — orval emits zod v4 syntax unless `zod` is a dep of `lib/api-spec`; keep `"zod": "catalog:"` there.
+- [Postgres timestamp equality claims](pg-timestamp-claims.md) — JS ms vs PG µs precision breaks `ts =` claims; use inequality + counter. Also: API server swallows console.*, use pino logger.

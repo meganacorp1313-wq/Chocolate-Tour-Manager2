@@ -25,6 +25,7 @@ import {
   generateBookingCode,
   expireStaleBookings,
   dispatchBookingEmails,
+  retryFailedBookingEmails,
 } from "../lib/bookings";
 import { getWhopClient } from "../lib/whopClient";
 
@@ -84,8 +85,9 @@ router.get("/availability", async (req, res): Promise<void> => {
   const from = `${month}-01`;
   const to = `${month}-31`;
 
-  // Clean up expired pending bookings lazily
+  // Clean up expired pending bookings lazily; retry failed emails in background
   await expireStaleBookings();
+  void retryFailedBookingEmails();
 
   const slots = await db
     .select()

@@ -1,4 +1,5 @@
-import { inArray, and, eq, sum, lt, or } from "drizzle-orm";
+import { inArray, and, eq, sum, lt, gt, or, sql } from "drizzle-orm";
+import { logger } from "./logger";
 import { db, bookingsTable, slotsTable, toursTable } from "@workspace/db";
 import type { Booking, Slot, Tour } from "@workspace/db";
 
@@ -46,6 +47,94 @@ export async function expireStaleBookings(): Promise<number> {
   return expired.length;
 }
 
+/** Max total send attempts (initial send + automatic retries). */
+const MAX_EMAIL_ATTEMPTS = 4;
+/** Only auto-retry bookings created within this window. */
+const RETRY_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/** Exponential backoff between automatic retries: 2, 8, 32 minutes. */
+function retryBackoffMs(attempts: number): number {
+  return 2 * 60 * 1000 * Math.pow(4, Math.max(0, attempts - 1));
+}
+
+let retryInFlight = false;
+
+/**
+ * Automatically retry booking emails that previously failed. Runs
+ * opportunistically alongside expireStaleBookings. Retries with
+ * exponential backoff, stops after MAX_EMAIL_ATTEMPTS, keeps the
+ * 'failed' status visible for manual resend. Never throws.
+ */
+export async function retryFailedBookingEmails(): Promise<void> {
+  if (retryInFlight) return;
+  retryInFlight = true;
+  try {
+    const now = Date.now();
+    const cutoff = new Date(now - RETRY_WINDOW_MS);
+    const candidates = await db
+      .select({
+        id: bookingsTable.id,
+        emailAttempts: bookingsTable.emailAttempts,
+        emailLastAttemptAt: bookingsTable.emailLastAttemptAt,
+      })
+      .from(bookingsTable)
+      .where(
+        and(
+          eq(bookingsTable.emailStatus, "failed"),
+          lt(bookingsTable.emailAttempts, MAX_EMAIL_ATTEMPTS),
+          gt(bookingsTable.createdAt, cutoff),
+        ),
+      );
+
+    const due = candidates.filter((c) => {
+      const last = c.emailLastAttemptAt?.getTime() ?? 0;
+      return now - last >= retryBackoffMs(c.emailAttempts);
+    });
+
+    for (const c of due) {
+      // Atomically claim the row so concurrent instances don't send
+      // duplicates: only the process whose conditional update matches
+      // (row still failed, same attempt count, backoff still elapsed)
+      // proceeds. Setting emailLastAttemptAt makes competing claims fail.
+      const backoffCutoff = new Date(now - retryBackoffMs(c.emailAttempts));
+      const claimed = await db
+        .update(bookingsTable)
+        .set({ emailLastAttemptAt: new Date() })
+        .where(
+          and(
+            eq(bookingsTable.id, c.id),
+            eq(bookingsTable.emailStatus, "failed"),
+            eq(bookingsTable.emailAttempts, c.emailAttempts),
+            or(
+              sql`${bookingsTable.emailLastAttemptAt} IS NULL`,
+              lt(bookingsTable.emailLastAttemptAt, backoffCutoff),
+            ),
+          ),
+        )
+        .returning({ id: bookingsTable.id });
+      if (claimed.length === 0) continue;
+
+      const [view] = await fetchBookingViews({ id: c.id });
+      if (!view || view.emailStatus !== "failed") continue;
+      logger.info(
+        { bookingId: c.id, attempt: c.emailAttempts + 1, max: MAX_EMAIL_ATTEMPTS },
+        "auto-retrying booking email",
+      );
+      await dispatchBookingEmails(view);
+    }
+    if (candidates.length > 0) {
+      logger.info(
+        { candidates: candidates.length, due: due.length },
+        "email retry pass finished",
+      );
+    }
+  } catch (err) {
+    logger.error({ err }, "email auto-retry pass failed");
+  } finally {
+    retryInFlight = false;
+  }
+}
+
 export function generateBookingCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -66,14 +155,16 @@ export async function dispatchBookingEmails(view: BookingView): Promise<void> {
     const result = await sendBookingEmails(view);
     await db
       .update(bookingsTable)
-      .set(
-        result.ok
-          ? { emailStatus: "sent", emailError: null }
+      .set({
+        emailAttempts: sql`${bookingsTable.emailAttempts} + 1`,
+        emailLastAttemptAt: new Date(),
+        ...(result.ok
+          ? { emailStatus: "sent" as const, emailError: null }
           : {
-              emailStatus: "failed",
+              emailStatus: "failed" as const,
               emailError: result.errors.join("; ").slice(0, 1000),
-            },
-      )
+            }),
+      })
       .where(eq(bookingsTable.id, view.id));
   } catch (err) {
     console.error("[email] unexpected error dispatching booking emails", err);
@@ -81,6 +172,8 @@ export async function dispatchBookingEmails(view: BookingView): Promise<void> {
       .update(bookingsTable)
       .set({
         emailStatus: "failed",
+        emailAttempts: sql`${bookingsTable.emailAttempts} + 1`,
+        emailLastAttemptAt: new Date(),
         emailError: (err instanceof Error ? err.message : String(err)).slice(
           0,
           1000,

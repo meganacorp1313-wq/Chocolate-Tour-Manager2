@@ -75,6 +75,7 @@ import {
   fetchBookingViews,
   expireStaleBookings,
   dispatchBookingEmails,
+  retryFailedBookingEmails,
 } from "../lib/bookings";
 import { hashPassword, verifyPassword, isHashedPassword } from "../lib/password";
 
@@ -718,6 +719,7 @@ router.post(
 // Expire unpaid bookings past their payment window
 router.post("/admin/bookings/expire", requireAdmin, async (_req, res): Promise<void> => {
   const cancelled = await expireStaleBookings();
+  void retryFailedBookingEmails();
   res.json(ExpireUnpaidBookingsResponse.parse({ cancelled }));
 });
 

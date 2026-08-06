@@ -26,6 +26,8 @@ export const bookingsTable = pgTable("bookings", {
   language: text("language").notNull().default("es"), // es | en | ru — client UI language for emails
   emailStatus: text("email_status"), // null = not attempted yet | sent | failed
   emailError: text("email_error"), // last email failure details, cleared on success
+  emailAttempts: integer("email_attempts").notNull().default(0), // send attempts so far (initial + automatic retries)
+  emailLastAttemptAt: timestamp("email_last_attempt_at", { withTimezone: true }), // when the last send attempt happened
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
