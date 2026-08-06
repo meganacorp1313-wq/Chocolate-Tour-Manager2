@@ -58,6 +58,8 @@ import {
   UpdateBookingStatusParams,
   UpdateBookingStatusBody,
   UpdateBookingStatusResponse,
+  ChangeAdminPasswordBody,
+  ChangeAdminPasswordResponse,
 } from "@workspace/api-zod";
 import {
   readSession,
@@ -66,23 +68,46 @@ import {
   ADMIN_COOKIE,
 } from "../lib/session";
 import { bookedSeatsBySlot, fetchBookingViews } from "../lib/bookings";
+import { hashPassword, verifyPassword, isHashedPassword } from "../lib/password";
 
 const router: IRouter = Router();
 
 const ADMIN_PASSWORD_KEY = "admin_password";
 export const DEFAULT_ADMIN_PASSWORD = "fabrika2026";
 
-async function getAdminPassword(): Promise<string> {
+async function getStoredAdminPassword(): Promise<string> {
   const [row] = await db
     .select()
     .from(settingsTable)
     .where(eq(settingsTable.key, ADMIN_PASSWORD_KEY));
   if (row) return row.value;
+  const hashed = hashPassword(DEFAULT_ADMIN_PASSWORD);
   await db
     .insert(settingsTable)
-    .values({ key: ADMIN_PASSWORD_KEY, value: DEFAULT_ADMIN_PASSWORD })
+    .values({ key: ADMIN_PASSWORD_KEY, value: hashed })
     .onConflictDoNothing();
-  return DEFAULT_ADMIN_PASSWORD;
+  return hashed;
+}
+
+async function setAdminPassword(newPassword: string): Promise<void> {
+  const hashed = hashPassword(newPassword);
+  await db
+    .insert(settingsTable)
+    .values({ key: ADMIN_PASSWORD_KEY, value: hashed })
+    .onConflictDoUpdate({
+      target: settingsTable.key,
+      set: { value: hashed },
+    });
+}
+
+async function checkAdminPassword(password: string): Promise<boolean> {
+  const stored = await getStoredAdminPassword();
+  if (!verifyPassword(password, stored)) return false;
+  // Migrate legacy plaintext value to a salted hash on successful check.
+  if (!isHashedPassword(stored)) {
+    await setAdminPassword(password);
+  }
+  return true;
 }
 
 function requireAdmin(req: Request, res: Response, next: NextFunction): void {
@@ -100,8 +125,7 @@ router.post("/admin/login", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const password = await getAdminPassword();
-  if (parsed.data.password !== password) {
+  if (!(await checkAdminPassword(parsed.data.password))) {
     res.status(401).json({ error: "Неверный пароль" });
     return;
   }
@@ -164,6 +188,20 @@ router.get("/admin/summary", requireAdmin, async (_req, res): Promise<void> => {
       activeCompanies: companiesCount?.value ?? 0,
     }),
   );
+});
+
+router.post("/admin/password", requireAdmin, async (req, res): Promise<void> => {
+  const parsed = ChangeAdminPasswordBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Новый пароль должен быть не короче 6 символов" });
+    return;
+  }
+  if (!(await checkAdminPassword(parsed.data.currentPassword))) {
+    res.status(401).json({ error: "Текущий пароль указан неверно" });
+    return;
+  }
+  await setAdminPassword(parsed.data.newPassword);
+  res.json(ChangeAdminPasswordResponse.parse({ ok: true }));
 });
 
 // ---- Tours ----

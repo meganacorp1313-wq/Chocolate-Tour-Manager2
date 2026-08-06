@@ -577,6 +577,24 @@ export const SetCompanyPriceListResponse = zod.array(SetCompanyPriceListResponse
 
 
 /**
+ * @summary Change admin password (requires current password)
+ */
+
+export const changeAdminPasswordBodyNewPasswordMin = 6;
+
+
+
+export const ChangeAdminPasswordBody = zod.object({
+  "currentPassword": zod.string().min(1),
+  "newPassword": zod.string().min(changeAdminPasswordBodyNewPasswordMin)
+})
+
+export const ChangeAdminPasswordResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary List bookings (optionally filter by date range)
  */
 export const AdminListBookingsQueryParams = zod.object({

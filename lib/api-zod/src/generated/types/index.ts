@@ -9,6 +9,7 @@
 export * from './adminListBookingsParams';
 export * from './adminListSlotsParams';
 export * from './adminLoginInput';
+export * from './adminPasswordChangeInput';
 export * from './adminSummary';
 export * from './booking';
 export * from './bookingInput';

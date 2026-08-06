@@ -576,6 +576,36 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CompanyPrice"
+  /admin/password:
+    post:
+      operationId: changeAdminPassword
+      tags: [admin]
+      summary: Change admin password (requires current password)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminPasswordChangeInput"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+        "400":
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "401":
+          description: Wrong current password or not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
   /admin/bookings:
     get:
       operationId: adminListBookings
@@ -772,6 +802,12 @@ components:
       required: [password]
       properties:
         password: { type: string, minLength: 1 }
+    AdminPasswordChangeInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string, minLength: 1 }
+        newPassword: { type: string, minLength: 6 }
     CompanySession:
       type: object
       required: [id, name]

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter"
 import { useAdminLogout } from "@workspace/api-client-react"
 import { Button } from "@/components/ui/button"
-import { LogOut, CalendarDays, Ticket, Building2, LayoutDashboard } from "lucide-react"
+import { LogOut, CalendarDays, Ticket, Building2, LayoutDashboard, Settings } from "lucide-react"
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const logout = useAdminLogout()
@@ -55,6 +55,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </Link>
             <Link href="/admin/companies" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/companies") ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
               <Building2 className="h-4 w-4" /> Партнеры
+            </Link>
+            <Link href="/admin/settings" className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground text-muted-foreground">
+              <Settings className="h-4 w-4" /> Настройки
             </Link>
           </nav>
         </aside>

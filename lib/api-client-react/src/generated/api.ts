@@ -23,6 +23,7 @@ import type {
   AdminListBookingsParams,
   AdminListSlotsParams,
   AdminLoginInput,
+  AdminPasswordChangeInput,
   AdminSummary,
   Booking,
   BookingInput,
@@ -2314,6 +2315,77 @@ export const useSetCompanyPriceList = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getSetCompanyPriceListMutationOptions(options));
+    }
+
+export const getChangeAdminPasswordUrl = () => {
+
+
+
+
+  return `/api/admin/password`
+}
+
+/**
+ * @summary Change admin password (requires current password)
+ */
+export const changeAdminPassword = async (adminPasswordChangeInput: AdminPasswordChangeInput, options?: Parameters<typeof customFetch>[1]): Promise<OkStatus> => {
+
+  return customFetch<OkStatus>(getChangeAdminPasswordUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminPasswordChangeInput)
+  }
+);}
+
+
+
+
+
+export const getChangeAdminPasswordMutationOptions = <TError = ErrorType<ErrorMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeAdminPassword>>, TError,{data: BodyType<AdminPasswordChangeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeAdminPassword>>, TError,{data: BodyType<AdminPasswordChangeInput>}, TContext> => {
+
+const mutationKey = ['changeAdminPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeAdminPassword>>, {data: BodyType<AdminPasswordChangeInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  changeAdminPassword(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangeAdminPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changeAdminPassword>>>
+    export type ChangeAdminPasswordMutationBody = BodyType<AdminPasswordChangeInput>
+    export type ChangeAdminPasswordMutationError = ErrorType<ErrorMessage>
+
+    /**
+ * @summary Change admin password (requires current password)
+ */
+export const useChangeAdminPassword = <TError = ErrorType<ErrorMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeAdminPassword>>, TError,{data: BodyType<AdminPasswordChangeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof changeAdminPassword>>,
+        TError,
+        {data: BodyType<AdminPasswordChangeInput>},
+        TContext
+      > => {
+      return useMutation(getChangeAdminPasswordMutationOptions(options));
     }
 
 export const getAdminListBookingsUrl = (params?: AdminListBookingsParams,) => {

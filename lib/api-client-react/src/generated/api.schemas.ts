@@ -188,6 +188,13 @@ export interface AdminLoginInput {
   password: string;
 }
 
+export interface AdminPasswordChangeInput {
+  /** @minLength 1 */
+  currentPassword: string;
+  /** @minLength 6 */
+  newPassword: string;
+}
+
 export interface CompanySession {
   id: number;
   name: string;
