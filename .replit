@@ -26,3 +26,4 @@ channel = "stable-25_05"
 
 [userenv.shared]
 WHOP_COMPANY_ID = "biz_awTYdEcefaQUr5"
+WHOP_WEBHOOK_SECRET = "ws_716ee2c1c499302b596b446041f29352908ebe2e535fde906ce16145d3c9c6bf"
