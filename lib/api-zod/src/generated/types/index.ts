@@ -21,6 +21,7 @@ export * from './bookingStatus';
 export * from './bookingStatusUpdate';
 export * from './bookingStatusUpdateStatus';
 export * from './bulkResult';
+export * from './checkInBooking200';
 export * from './company';
 export * from './companyInput';
 export * from './companyLoginInput';

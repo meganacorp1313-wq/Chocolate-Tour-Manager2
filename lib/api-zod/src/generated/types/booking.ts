@@ -60,5 +60,10 @@ export interface Booking {
   emailAttempts?: number;
   /** true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually */
   emailRetriesExhausted?: boolean;
+  /**
+     * ISO timestamp when the client was checked in on arrival (QR scan); null = not arrived yet
+     * @nullable
+     */
+  checkedInAt?: string | null;
   createdAt: string;
 }

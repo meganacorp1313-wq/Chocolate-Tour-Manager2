@@ -28,6 +28,7 @@ export const bookingsTable = pgTable("bookings", {
   emailError: text("email_error"), // last email failure details, cleared on success
   emailAttempts: integer("email_attempts").notNull().default(0), // send attempts so far (initial + automatic retries)
   emailLastAttemptAt: timestamp("email_last_attempt_at", { withTimezone: true }), // when the last send attempt happened
+  checkedInAt: timestamp("checked_in_at", { withTimezone: true }), // when the client arrived (QR check-in)
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

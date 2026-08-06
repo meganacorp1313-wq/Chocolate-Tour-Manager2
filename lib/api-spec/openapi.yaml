@@ -667,6 +667,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorMessage"
+  /admin/check-in/{code}:
+    post:
+      operationId: checkInBooking
+      tags: [admin]
+      summary: Mark a booking as arrived by its code (QR check-in)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Check-in result with booking details
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [booking, alreadyCheckedIn]
+                properties:
+                  booking:
+                    $ref: "#/components/schemas/Booking"
+                  alreadyCheckedIn:
+                    type: boolean
+                    description: True if the booking was already checked in before this call
+        "404":
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "409":
+          description: Booking is not confirmed (cancelled or pending payment)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
   /admin/bookings/{id}:
     patch:
       operationId: updateBookingStatus
@@ -848,6 +884,7 @@ components:
         emailError: { type: ["string", "null"], description: "Details of the last email failure, cleared on success" }
         emailAttempts: { type: integer, description: "Total email send attempts so far (initial send + automatic retries)" }
         emailRetriesExhausted: { type: boolean, description: "true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually" }
+        checkedInAt: { type: ["string", "null"], description: "ISO timestamp when the client was checked in on arrival (QR scan); null = not arrived yet" }
         createdAt: { type: string }
     BookingStatusUpdate:
       type: object

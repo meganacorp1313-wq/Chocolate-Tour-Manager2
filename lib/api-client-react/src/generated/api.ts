@@ -29,6 +29,7 @@ import type {
   BookingInput,
   BookingStatusUpdate,
   BulkResult,
+  CheckInBooking200,
   Company,
   CompanyInput,
   CompanyLoginInput,
@@ -2613,6 +2614,77 @@ export const useResendBookingEmails = <TError = ErrorType<ErrorMessage>,
         TContext
       > => {
       return useMutation(getResendBookingEmailsMutationOptions(options));
+    }
+
+export const getCheckInBookingUrl = (code: string,) => {
+
+
+
+
+  return `/api/admin/check-in/${code}`
+}
+
+/**
+ * @summary Mark a booking as arrived by its code (QR check-in)
+ */
+export const checkInBooking = async (code: string, options?: Parameters<typeof customFetch>[1]): Promise<CheckInBooking200> => {
+
+  return customFetch<CheckInBooking200>(getCheckInBookingUrl(code),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCheckInBookingMutationOptions = <TError = ErrorType<ErrorMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkInBooking>>, TError,{code: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkInBooking>>, TError,{code: string}, TContext> => {
+
+const mutationKey = ['checkInBooking'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkInBooking>>, {code: string}> = (props) => {
+          const {code} = props ?? {};
+
+          return  checkInBooking(code,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckInBookingMutationResult = NonNullable<Awaited<ReturnType<typeof checkInBooking>>>
+
+    export type CheckInBookingMutationError = ErrorType<ErrorMessage>
+
+    /**
+ * @summary Mark a booking as arrived by its code (QR check-in)
+ */
+export const useCheckInBooking = <TError = ErrorType<ErrorMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkInBooking>>, TError,{code: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof checkInBooking>>,
+        TError,
+        {code: string},
+        TContext
+      > => {
+      return useMutation(getCheckInBookingMutationOptions(options));
     }
 
 export const getUpdateBookingStatusUrl = (id: number,) => {

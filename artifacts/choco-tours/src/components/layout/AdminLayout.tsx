@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter"
 import { useAdminLogout } from "@workspace/api-client-react"
 import { Button } from "@/components/ui/button"
-import { LogOut, CalendarDays, Ticket, Building2, LayoutDashboard, Settings } from "lucide-react"
+import { LogOut, CalendarDays, Ticket, Building2, LayoutDashboard, Settings, QrCode } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
@@ -40,6 +40,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <Link href="/admin/schedule" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/schedule") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("schedule")}</Link>
             <Link href="/admin/tours" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/tours") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("tours_title")}</Link>
             <Link href="/admin/bookings" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/bookings") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("bookings")}</Link>
+            <Link href="/admin/checkin" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/checkin") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("checkin_title")}</Link>
             <Link href="/admin/companies" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/companies") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("companies")}</Link>
           </nav>
         </div>
@@ -58,6 +59,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </Link>
             <Link href="/admin/bookings" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/bookings") ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
               <Ticket className="h-4 w-4" /> {t("bookings")}
+            </Link>
+            <Link href="/admin/checkin" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/checkin") ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
+              <QrCode className="h-4 w-4" /> {t("checkin_title")}
             </Link>
             <Link href="/admin/companies" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/companies") ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
               <Building2 className="h-4 w-4" /> {t("companies")}

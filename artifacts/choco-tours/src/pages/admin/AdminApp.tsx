@@ -16,6 +16,7 @@ import AdminTours from "./AdminTours"
 import AdminSchedule from "./AdminSchedule"
 import AdminCompanies from "./AdminCompanies"
 import AdminBookings from "./AdminBookings"
+import AdminCheckIn from "./AdminCheckIn"
 
 function AdminLogin() {
   const [password, setPassword] = useState("")
@@ -98,6 +99,7 @@ export default function AdminApp() {
         <Route path="/admin/schedule" component={AdminSchedule} />
         <Route path="/admin/companies" component={AdminCompanies} />
         <Route path="/admin/bookings" component={AdminBookings} />
+        <Route path="/admin/checkin" component={AdminCheckIn} />
         <Route path="/admin/*">
           <Redirect to="/admin" />
         </Route>

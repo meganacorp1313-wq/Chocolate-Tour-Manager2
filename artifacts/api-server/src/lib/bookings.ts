@@ -212,6 +212,7 @@ export interface BookingView {
   emailError: string | null;
   emailAttempts: number;
   emailRetriesExhausted: boolean;
+  checkedInAt: string | null;
   createdAt: string;
 }
 
@@ -251,6 +252,7 @@ export function toBookingView(
       booking.emailStatus === "failed" &&
       (booking.emailAttempts >= MAX_EMAIL_ATTEMPTS ||
         Date.now() - booking.createdAt.getTime() >= RETRY_WINDOW_MS),
+    checkedInAt: booking.checkedInAt ? booking.checkedInAt.toISOString() : null,
     createdAt: booking.createdAt.toISOString(),
   };
 }

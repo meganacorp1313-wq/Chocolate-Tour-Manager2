@@ -1,3 +1,4 @@
+import QRCode from "qrcode";
 import { ReplitConnectors } from "@replit/connectors-sdk";
 import type { BookingView } from "./bookings.js";
 
@@ -61,6 +62,7 @@ interface ClientStrings {
   pricePerPerson: string;
   total: string;
   comment: string;
+  qrHint: string;
   footer: string;
 }
 
@@ -79,6 +81,7 @@ const CLIENT_STRINGS: Record<Lang, ClientStrings> = {
     pricePerPerson: "Precio por persona",
     total: "Total",
     comment: "Comentario",
+    qrHint: "Muestre este código QR a su llegada a la fábrica — lo escanearemos para registrar su asistencia:",
     footer: "Si tiene alguna pregunta, póngase en contacto con el administrador.",
   },
   en: {
@@ -95,6 +98,7 @@ const CLIENT_STRINGS: Record<Lang, ClientStrings> = {
     pricePerPerson: "Price per person",
     total: "Total",
     comment: "Comment",
+    qrHint: "Show this QR code when you arrive at the factory — we will scan it to check you in:",
     footer: "If you have any questions, please contact the administrator.",
   },
   ru: {
@@ -111,6 +115,7 @@ const CLIENT_STRINGS: Record<Lang, ClientStrings> = {
     pricePerPerson: "Цена за человека",
     total: "Итого",
     comment: "Комментарий",
+    qrHint: "Покажите этот QR-код по приезде на фабрику — мы отсканируем его и отметим ваш визит:",
     footer: "Если у вас есть вопросы, обратитесь к администратору.",
   },
 };
@@ -124,6 +129,10 @@ function clientHtml(b: BookingView, lang: Lang): string {
   <p>${s.intro}</p>
   <div style="font-size:32px;font-weight:bold;letter-spacing:6px;text-align:center;padding:16px;background:#fdf3e7;border-radius:8px;color:#6b3a0f">
     ${esc(b.code)}
+  </div>
+  <p style="margin-top:16px">${s.qrHint}</p>
+  <div style="text-align:center;padding:8px 0">
+    <img src="cid:booking-qr" alt="QR" width="220" height="220" style="display:inline-block" />
   </div>
   <h3 style="margin-top:24px">${s.details}</h3>
   <table style="width:100%;border-collapse:collapse">
@@ -163,6 +172,7 @@ async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
+  attachments?: { filename: string; content: string; contentId?: string }[];
 }): Promise<void> {
   // Prefer a direct RESEND_API_KEY secret when set; fall back to the
   // Replit Connectors proxy so the integration can be used if preferred.
@@ -182,6 +192,15 @@ async function sendEmail(opts: {
         to: [opts.to],
         subject: opts.subject,
         html: opts.html,
+        ...(opts.attachments?.length
+          ? {
+              attachments: opts.attachments.map((a) => ({
+                filename: a.filename,
+                content: a.content,
+                ...(a.contentId ? { content_id: a.contentId } : {}),
+              })),
+            }
+          : {}),
       }),
     });
   } else {
@@ -194,6 +213,15 @@ async function sendEmail(opts: {
         to: [opts.to],
         subject: opts.subject,
         html: opts.html,
+        ...(opts.attachments?.length
+          ? {
+              attachments: opts.attachments.map((a) => ({
+                filename: a.filename,
+                content: a.content,
+                ...(a.contentId ? { content_id: a.contentId } : {}),
+              })),
+            }
+          : {}),
       }),
     });
   }
@@ -239,11 +267,22 @@ export async function sendBookingEmails(
   const tasks: Promise<void>[] = [];
 
   if (booking.email) {
+    let qrBase64 = "";
+    try {
+      qrBase64 = (
+        await QRCode.toBuffer(booking.code, { width: 440, margin: 1 })
+      ).toString("base64");
+    } catch (err) {
+      console.error("[email] failed to generate QR code", err);
+    }
     tasks.push(
       sendEmail({
         to: booking.email,
         subject: CLIENT_STRINGS[lang].subject(safeCode),
         html: clientHtml(booking, lang),
+        attachments: qrBase64
+          ? [{ filename: "booking-qr.png", content: qrBase64, contentId: "booking-qr" }]
+          : undefined,
       }).catch((err) => {
         console.error("[email] failed to send client confirmation", err);
         errors.push(

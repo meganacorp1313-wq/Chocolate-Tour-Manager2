@@ -1,5 +1,6 @@
 import { useRoute } from "wouter"
 import { useGetBookingByCode, getGetBookingByCodeQueryKey } from "@workspace/api-client-react"
+import { QRCodeSVG } from "qrcode.react"
 import { PublicLayout } from "@/components/layout/PublicLayout"
 import { Loader2, CheckCircle2, Calendar as CalIcon, Clock, Users, Ticket, MapPin } from "lucide-react"
 import { format, parseISO } from "date-fns"
@@ -105,6 +106,14 @@ export default function BookingConfirmation() {
               <div className="bg-primary text-primary-foreground p-4 sm:p-6 text-center border-b border-primary/20">
                 <p className="text-primary-foreground/80 text-xs sm:text-sm font-medium uppercase tracking-wider mb-1">{t("booking_code")}</p>
                 <p className="font-mono text-3xl sm:text-4xl font-bold tracking-widest">{booking.code}</p>
+                {booking.status === "confirmed" && (
+                  <div className="mt-4 flex flex-col items-center gap-2">
+                    <div className="bg-white p-2.5 rounded-lg">
+                      <QRCodeSVG value={booking.code} size={160} />
+                    </div>
+                    <p className="text-primary-foreground/80 text-xs sm:text-sm">{t("qr_show_hint")}</p>
+                  </div>
+                )}
               </div>
               <CardContent className="p-4 sm:p-8">
                 <h3 className="font-serif text-xl sm:text-2xl font-bold mb-6 text-center">{tourName}</h3>

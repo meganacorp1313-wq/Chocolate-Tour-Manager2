@@ -5,7 +5,7 @@ import {
   type Response,
   type NextFunction,
 } from "express";
-import { and, eq, gte, lte, count } from "drizzle-orm";
+import { and, eq, gte, lte, count, isNull } from "drizzle-orm";
 import {
   db,
   toursTable,
@@ -63,6 +63,8 @@ import {
   ExpireUnpaidBookingsResponse,
   ResendBookingEmailsParams,
   ResendBookingEmailsResponse,
+  CheckInBookingParams,
+  CheckInBookingResponse,
 } from "@workspace/api-zod";
 import {
   readSession,
@@ -713,6 +715,45 @@ router.post(
     await dispatchBookingEmails(view);
     const [updated] = await fetchBookingViews({ id: params.data.id });
     res.json(ResendBookingEmailsResponse.parse(updated));
+  },
+);
+
+// QR check-in: mark a booking as arrived by its code
+router.post(
+  "/admin/check-in/:code",
+  requireAdmin,
+  async (req, res): Promise<void> => {
+    const params = CheckInBookingParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: "Некорректные данные" });
+      return;
+    }
+    const code = params.data.code.trim().toUpperCase();
+    // Atomic conditional update: only the first scan sets checkedInAt.
+    const claimed = await db
+      .update(bookingsTable)
+      .set({ checkedInAt: new Date() })
+      .where(
+        and(
+          eq(bookingsTable.code, code),
+          eq(bookingsTable.status, "confirmed"),
+          isNull(bookingsTable.checkedInAt),
+        ),
+      )
+      .returning({ id: bookingsTable.id });
+    const alreadyCheckedIn = claimed.length === 0;
+    const [updated] = await fetchBookingViews({ code });
+    if (!updated) {
+      res.status(404).json({ error: "Бронирование не найдено" });
+      return;
+    }
+    if (updated.status !== "confirmed") {
+      res.status(409).json({ error: "Бронь не подтверждена" });
+      return;
+    }
+    res.json(
+      CheckInBookingResponse.parse({ booking: updated, alreadyCheckedIn }),
+    );
   },
 );
 
