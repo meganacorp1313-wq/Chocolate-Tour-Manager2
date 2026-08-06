@@ -43,7 +43,7 @@ export default function AdminBookings() {
       onSuccess: (updated) => {
         queryClient.setQueryData(getAdminListBookingsQueryKey(params), (old: any) => {
           if (!old) return old
-          return old.map((b: any) => b.id === id ? { ...b, emailStatus: updated.emailStatus, emailError: updated.emailError } : b)
+          return old.map((b: any) => b.id === id ? { ...b, emailStatus: updated.emailStatus, emailError: updated.emailError, emailAttempts: updated.emailAttempts, emailRetriesExhausted: updated.emailRetriesExhausted } : b)
         })
       },
       onSettled: () => setResendingId(null)
@@ -133,13 +133,20 @@ export default function AdminBookings() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {b.emailStatus === 'failed' ? (
+                    {b.emailStatus === 'failed' && !b.emailRetriesExhausted ? (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 whitespace-nowrap"
+                        title={b.emailError ?? undefined}
+                      >
+                        <RotateCw className="w-3.5 h-3.5" /> {t("email_retrying").replace("{n}", String(b.emailAttempts ?? 0)).replace("{max}", "4")}
+                      </span>
+                    ) : b.emailStatus === 'failed' ? (
                       <div className="flex items-center gap-1.5">
                         <span
                           className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 whitespace-nowrap"
                           title={b.emailError ?? undefined}
                         >
-                          <MailWarning className="w-3.5 h-3.5" /> {t("email_failed")}
+                          <MailWarning className="w-3.5 h-3.5" /> {t("email_failed_manual")}
                         </span>
                         <Button
                           size="sm"

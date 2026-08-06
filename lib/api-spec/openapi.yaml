@@ -846,6 +846,8 @@ components:
         language: { type: string, enum: [es, en, ru] }
         emailStatus: { type: ["string", "null"], enum: [sent, failed, null], description: "null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed" }
         emailError: { type: ["string", "null"], description: "Details of the last email failure, cleared on success" }
+        emailAttempts: { type: integer, description: "Total email send attempts so far (initial send + automatic retries)" }
+        emailRetriesExhausted: { type: boolean, description: "true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually" }
         createdAt: { type: string }
     BookingStatusUpdate:
       type: object

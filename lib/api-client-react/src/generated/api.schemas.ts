@@ -256,6 +256,10 @@ export interface Booking {
      * @nullable
      */
   emailError?: string | null;
+  /** Total email send attempts so far (initial send + automatic retries) */
+  emailAttempts?: number;
+  /** true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually */
+  emailRetriesExhausted?: boolean;
   createdAt: string;
 }
 

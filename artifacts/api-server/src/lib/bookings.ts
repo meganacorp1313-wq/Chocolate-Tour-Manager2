@@ -48,7 +48,7 @@ export async function expireStaleBookings(): Promise<number> {
 }
 
 /** Max total send attempts (initial send + automatic retries). */
-const MAX_EMAIL_ATTEMPTS = 4;
+export const MAX_EMAIL_ATTEMPTS = 4;
 /** Only auto-retry bookings created within this window. */
 const RETRY_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -210,6 +210,8 @@ export interface BookingView {
   language: string;
   emailStatus: string | null;
   emailError: string | null;
+  emailAttempts: number;
+  emailRetriesExhausted: boolean;
   createdAt: string;
 }
 
@@ -244,6 +246,11 @@ export function toBookingView(
     language: booking.language,
     emailStatus: booking.emailStatus ?? null,
     emailError: booking.emailError ?? null,
+    emailAttempts: booking.emailAttempts,
+    emailRetriesExhausted:
+      booking.emailStatus === "failed" &&
+      (booking.emailAttempts >= MAX_EMAIL_ATTEMPTS ||
+        Date.now() - booking.createdAt.getTime() >= RETRY_WINDOW_MS),
     createdAt: booking.createdAt.toISOString(),
   };
 }

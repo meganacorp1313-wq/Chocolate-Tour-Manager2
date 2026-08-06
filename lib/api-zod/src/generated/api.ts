@@ -117,6 +117,8 @@ export const CreateBookingResponse = zod.object({
   "language": zod.enum(['es', 'en', 'ru']).optional(),
   "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
   "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
+  "emailAttempts": zod.number().int().optional().describe('Total email send attempts so far (initial send + automatic retries)'),
+  "emailRetriesExhausted": zod.boolean().optional().describe('true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually'),
   "createdAt": zod.string()
 })
 
@@ -152,6 +154,8 @@ export const GetBookingByCodeResponse = zod.object({
   "language": zod.enum(['es', 'en', 'ru']).optional(),
   "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
   "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
+  "emailAttempts": zod.number().int().optional().describe('Total email send attempts so far (initial send + automatic retries)'),
+  "emailRetriesExhausted": zod.boolean().optional().describe('true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually'),
   "createdAt": zod.string()
 })
 
@@ -228,6 +232,8 @@ export const GetCompanyBookingsResponseItem = zod.object({
   "language": zod.enum(['es', 'en', 'ru']).optional(),
   "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
   "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
+  "emailAttempts": zod.number().int().optional().describe('Total email send attempts so far (initial send + automatic retries)'),
+  "emailRetriesExhausted": zod.boolean().optional().describe('true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually'),
   "createdAt": zod.string()
 })
 export const GetCompanyBookingsResponse = zod.array(GetCompanyBookingsResponseItem)
@@ -680,6 +686,8 @@ export const AdminListBookingsResponseItem = zod.object({
   "language": zod.enum(['es', 'en', 'ru']).optional(),
   "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
   "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
+  "emailAttempts": zod.number().int().optional().describe('Total email send attempts so far (initial send + automatic retries)'),
+  "emailRetriesExhausted": zod.boolean().optional().describe('true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually'),
   "createdAt": zod.string()
 })
 export const AdminListBookingsResponse = zod.array(AdminListBookingsResponseItem)
@@ -724,6 +732,8 @@ export const ResendBookingEmailsResponse = zod.object({
   "language": zod.enum(['es', 'en', 'ru']).optional(),
   "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
   "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
+  "emailAttempts": zod.number().int().optional().describe('Total email send attempts so far (initial send + automatic retries)'),
+  "emailRetriesExhausted": zod.boolean().optional().describe('true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually'),
   "createdAt": zod.string()
 })
 
@@ -763,6 +773,8 @@ export const UpdateBookingStatusResponse = zod.object({
   "language": zod.enum(['es', 'en', 'ru']).optional(),
   "emailStatus": zod.union([zod.literal('sent'),zod.literal('failed'),zod.literal(null)]).nullish().describe('null = emails not attempted yet; sent = all emails delivered to Resend; failed = at least one email failed'),
   "emailError": zod.string().nullish().describe('Details of the last email failure, cleared on success'),
+  "emailAttempts": zod.number().int().optional().describe('Total email send attempts so far (initial send + automatic retries)'),
+  "emailRetriesExhausted": zod.boolean().optional().describe('true when emailStatus is failed and automatic retries have stopped (max attempts reached or booking too old) — admin must resend manually'),
   "createdAt": zod.string()
 })
 
