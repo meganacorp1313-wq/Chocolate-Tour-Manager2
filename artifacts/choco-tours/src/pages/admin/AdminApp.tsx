@@ -17,8 +17,11 @@ import AdminSchedule from "./AdminSchedule"
 import AdminCompanies from "./AdminCompanies"
 import AdminBookings from "./AdminBookings"
 import AdminCheckIn from "./AdminCheckIn"
+import AdminSettings from "./AdminSettings"
+import AdminStaff from "./AdminStaff"
 
 function AdminLogin() {
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const login = useAdminLogin()
@@ -28,7 +31,7 @@ function AdminLogin() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    login.mutate({ data: { password } }, {
+    login.mutate({ data: { password, username: username.trim() || null } }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetAdminSessionQueryKey() })
       },
@@ -57,6 +60,13 @@ function AdminLogin() {
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4 pt-4">
               <div className="space-y-2">
+                <Input
+                  placeholder={t("username")}
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  autoComplete="username"
+                />
+                <p className="text-xs text-muted-foreground">{t("login_username_hint")}</p>
                 <Input
                   type="password"
                   placeholder={t("password")}
@@ -91,17 +101,25 @@ export default function AdminApp() {
     return <AdminLogin />
   }
 
+  const role = (session.role ?? "admin") as "admin" | "manager" | "staff"
+  const home = role === "staff" ? "/admin/checkin" : "/admin"
+
   return (
-    <AdminLayout>
+    <AdminLayout role={role}>
       <Switch>
-        <Route path="/admin" component={AdminDashboard} />
-        <Route path="/admin/tours" component={AdminTours} />
-        <Route path="/admin/schedule" component={AdminSchedule} />
-        <Route path="/admin/companies" component={AdminCompanies} />
+        {role !== "staff" && <Route path="/admin" component={AdminDashboard} />}
+        {role === "admin" && <Route path="/admin/tours" component={AdminTours} />}
+        {role !== "staff" && <Route path="/admin/schedule" component={AdminSchedule} />}
+        {role === "admin" && <Route path="/admin/companies" component={AdminCompanies} />}
         <Route path="/admin/bookings" component={AdminBookings} />
         <Route path="/admin/checkin" component={AdminCheckIn} />
+        {role === "admin" && <Route path="/admin/staff" component={AdminStaff} />}
+        {role === "admin" && <Route path="/admin/settings" component={AdminSettings} />}
         <Route path="/admin/*">
-          <Redirect to="/admin" />
+          <Redirect to={home} />
+        </Route>
+        <Route path="/admin">
+          <Redirect to={home} />
         </Route>
       </Switch>
     </AdminLayout>

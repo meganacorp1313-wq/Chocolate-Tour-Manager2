@@ -249,7 +249,8 @@ export const GetCompanyBookingsResponse = zod.array(GetCompanyBookingsResponseIt
 
 
 export const AdminLoginBody = zod.object({
-  "password": zod.string().min(1)
+  "password": zod.string().min(1),
+  "username": zod.string().nullish()
 })
 
 export const AdminLoginResponse = zod.object({
@@ -269,6 +270,90 @@ export const AdminLogoutResponse = zod.object({
  * @summary Check admin session
  */
 export const GetAdminSessionResponse = zod.object({
+  "ok": zod.boolean(),
+  "role": zod.enum(['admin', 'manager', 'staff']),
+  "name": zod.string().nullable().describe('Staff display name; null for the owner')
+})
+
+
+/**
+ * @summary List staff users (admin only)
+ */
+export const ListStaffResponseItem = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "username": zod.string(),
+  "role": zod.enum(['admin', 'manager', 'staff']),
+  "active": zod.boolean(),
+  "createdAt": zod.string()
+})
+export const ListStaffResponse = zod.array(ListStaffResponseItem)
+
+
+/**
+ * @summary Create a staff user (admin only)
+ */
+
+export const createStaffBodyUsernameMin = 3;
+
+export const createStaffBodyPasswordMin = 6;
+
+
+
+export const CreateStaffBody = zod.object({
+  "name": zod.string().min(1),
+  "username": zod.string().min(createStaffBodyUsernameMin),
+  "password": zod.string().min(createStaffBodyPasswordMin),
+  "role": zod.enum(['admin', 'manager', 'staff'])
+})
+
+export const CreateStaffResponse = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "username": zod.string(),
+  "role": zod.enum(['admin', 'manager', 'staff']),
+  "active": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Update a staff user (admin only)
+ */
+export const UpdateStaffParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+
+export const updateStaffBodyPasswordMin = 6;
+
+
+
+export const UpdateStaffBody = zod.object({
+  "name": zod.string().min(1).optional(),
+  "password": zod.string().min(updateStaffBodyPasswordMin).optional(),
+  "role": zod.enum(['admin', 'manager', 'staff']).optional(),
+  "active": zod.boolean().optional()
+})
+
+export const UpdateStaffResponse = zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "username": zod.string(),
+  "role": zod.enum(['admin', 'manager', 'staff']),
+  "active": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a staff user (admin only)
+ */
+export const DeleteStaffParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const DeleteStaffResponse = zod.object({
   "ok": zod.boolean()
 })
 

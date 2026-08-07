@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useAdminListBookings, useUpdateBookingStatus, useResendBookingEmails, getAdminListBookingsQueryKey } from "@workspace/api-client-react"
+import { useAdminListBookings, useUpdateBookingStatus, useResendBookingEmails, getAdminListBookingsQueryKey, useGetAdminSession, getGetAdminSessionQueryKey } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Card } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -24,6 +24,10 @@ export default function AdminBookings() {
   const [resendingId, setResendingId] = useState<number | null>(null)
   const queryClient = useQueryClient()
   const { t, dateLocale, lang } = useI18n()
+  const { data: session } = useGetAdminSession({
+    query: { queryKey: getGetAdminSessionQueryKey() },
+  })
+  const readOnly = session?.role === "staff"
 
   const handleStatus = (id: number, status: 'confirmed' | 'cancelled') => {
     updateStatus.mutate({ id, data: { status } }, {
@@ -148,7 +152,7 @@ export default function AdminBookings() {
                         >
                           <MailWarning className="w-3.5 h-3.5" /> {t("email_failed_manual")}
                         </span>
-                        <Button
+                        {!readOnly && <Button
                           size="sm"
                           variant="ghost"
                           className="h-7 px-2"
@@ -159,7 +163,7 @@ export default function AdminBookings() {
                           {resendingId === b.id
                             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             : <RotateCw className="w-3.5 h-3.5" />}
-                        </Button>
+                        </Button>}
                       </div>
                     ) : b.emailStatus === 'sent' ? (
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700 whitespace-nowrap">
@@ -171,7 +175,7 @@ export default function AdminBookings() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
-                      {b.status === 'cancelled' ? (
+                      {readOnly ? null : b.status === 'cancelled' ? (
                         <Button size="sm" variant="outline" onClick={() => handleStatus(b.id, 'confirmed')}>
                           <CheckCircle2 className="w-4 h-4 mr-1 text-green-600"/> {t("btn_restore")}
                         </Button>

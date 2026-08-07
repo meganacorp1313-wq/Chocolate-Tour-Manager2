@@ -5,10 +5,14 @@
  * Chocolate factory tours booking API
  * OpenAPI spec version: 0.1.0
  */
+import type { StaffInputRole } from './staffInputRole';
 
-export interface AdminLoginInput {
+export interface StaffInput {
   /** @minLength 1 */
+  name: string;
+  /** @minLength 3 */
+  username: string;
+  /** @minLength 6 */
   password: string;
-  /** @nullable */
-  username?: string | null;
+  role: StaffInputRole;
 }

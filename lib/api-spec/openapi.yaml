@@ -265,9 +265,97 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OkStatus"
+                $ref: "#/components/schemas/AdminSessionInfo"
         "401":
           description: Not logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /admin/staff:
+    get:
+      operationId: listStaff
+      tags: [admin]
+      summary: List staff users (admin only)
+      responses:
+        "200":
+          description: Staff users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StaffUser"
+    post:
+      operationId: createStaff
+      tags: [admin]
+      summary: Create a staff user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffInput"
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffUser"
+        "409":
+          description: Username already taken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /admin/staff/{id}:
+    patch:
+      operationId: updateStaff
+      tags: [admin]
+      summary: Update a staff user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffUser"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+    delete:
+      operationId: deleteStaff
+      tags: [admin]
+      summary: Delete a staff user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+        "404":
+          description: Not found
           content:
             application/json:
               schema:
@@ -901,12 +989,45 @@ components:
       required: [password]
       properties:
         password: { type: string, minLength: 1 }
+        username: { type: ["string", "null"] }
     AdminPasswordChangeInput:
       type: object
       required: [currentPassword, newPassword]
       properties:
         currentPassword: { type: string, minLength: 1 }
         newPassword: { type: string, minLength: 6 }
+    AdminSessionInfo:
+      type: object
+      required: [ok, role, name]
+      properties:
+        ok: { type: boolean }
+        role: { type: string, enum: [admin, manager, staff] }
+        name: { type: ["string", "null"], description: "Staff display name; null for the owner" }
+    StaffUser:
+      type: object
+      required: [id, name, username, role, active, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        username: { type: string }
+        role: { type: string, enum: [admin, manager, staff] }
+        active: { type: boolean }
+        createdAt: { type: string }
+    StaffInput:
+      type: object
+      required: [name, username, password, role]
+      properties:
+        name: { type: string, minLength: 1 }
+        username: { type: string, minLength: 3 }
+        password: { type: string, minLength: 6 }
+        role: { type: string, enum: [admin, manager, staff] }
+    StaffUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        password: { type: string, minLength: 6 }
+        role: { type: string, enum: [admin, manager, staff] }
+        active: { type: boolean }
     CompanySession:
       type: object
       required: [id, name]

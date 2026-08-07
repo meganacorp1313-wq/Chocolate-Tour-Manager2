@@ -35,6 +35,10 @@ function verify(token: string): string | null {
 interface SessionPayload {
   role: "admin" | "company";
   companyId?: number;
+  /** Staff account id; absent for the owner session */
+  staffId?: number;
+  /** Access level within the admin panel; absent = owner (full access) */
+  adminRole?: "admin" | "manager" | "staff";
   exp: number;
 }
 

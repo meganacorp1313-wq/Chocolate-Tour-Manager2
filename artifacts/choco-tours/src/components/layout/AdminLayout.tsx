@@ -1,11 +1,31 @@
 import { Link, useLocation } from "wouter"
 import { useAdminLogout } from "@workspace/api-client-react"
 import { Button } from "@/components/ui/button"
-import { LogOut, CalendarDays, Ticket, Building2, LayoutDashboard, Settings, QrCode } from "lucide-react"
+import { LogOut, CalendarDays, Ticket, Building2, LayoutDashboard, Settings, QrCode, Users } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
-export function AdminLayout({ children }: { children: React.ReactNode }) {
+type AdminRole = "admin" | "manager" | "staff"
+
+interface NavItem {
+  href: string
+  labelKey: string
+  icon: typeof LayoutDashboard
+  roles: AdminRole[]
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { href: "/admin", labelKey: "dashboard", icon: LayoutDashboard, roles: ["admin", "manager"] },
+  { href: "/admin/schedule", labelKey: "schedule", icon: CalendarDays, roles: ["admin", "manager"] },
+  { href: "/admin/tours", labelKey: "tours_title", icon: Ticket, roles: ["admin"] },
+  { href: "/admin/bookings", labelKey: "bookings", icon: Ticket, roles: ["admin", "manager", "staff"] },
+  { href: "/admin/checkin", labelKey: "checkin_title", icon: QrCode, roles: ["admin", "manager", "staff"] },
+  { href: "/admin/companies", labelKey: "companies", icon: Building2, roles: ["admin"] },
+  { href: "/admin/staff", labelKey: "staff_title", icon: Users, roles: ["admin"] },
+  { href: "/admin/settings", labelKey: "settings", icon: Settings, roles: ["admin"] },
+]
+
+export function AdminLayout({ children, role = "admin" }: { children: React.ReactNode; role?: AdminRole }) {
   const logout = useAdminLogout()
   const [location] = useLocation()
   const { t } = useI18n()
@@ -16,7 +36,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const isActive = (path: string) => location === path || location.startsWith(`${path}/`);
+  const isActive = (path: string) =>
+    path === "/admin" ? location === "/admin" : location === path || location.startsWith(`${path}/`)
+
+  const items = NAV_ITEMS.filter((item) => item.roles.includes(role))
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -36,39 +59,22 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
         <div className="md:hidden border-t bg-background overflow-x-auto scrollbar-hide">
           <nav className="flex items-center px-4 py-2 gap-2 min-w-max">
-            <Link href="/admin" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${location === "/admin" ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("dashboard")}</Link>
-            <Link href="/admin/schedule" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/schedule") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("schedule")}</Link>
-            <Link href="/admin/tours" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/tours") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("tours_title")}</Link>
-            <Link href="/admin/bookings" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/bookings") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("bookings")}</Link>
-            <Link href="/admin/checkin" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/checkin") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("checkin_title")}</Link>
-            <Link href="/admin/companies" className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/companies") ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>{t("companies")}</Link>
+            {items.map((item) => (
+              <Link key={item.href} href={item.href} className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive(item.href) ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}>
+                {t(item.labelKey)}
+              </Link>
+            ))}
           </nav>
         </div>
       </header>
       <div className="flex-1 flex container mx-auto px-4 sm:px-6">
         <aside className="w-64 border-r pr-6 py-8 hidden md:block shrink-0">
           <nav className="space-y-2 flex flex-col">
-            <Link href="/admin" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${location === "/admin" ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
-              <LayoutDashboard className="h-4 w-4" /> {t("dashboard")}
-            </Link>
-            <Link href="/admin/schedule" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/schedule") ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
-              <CalendarDays className="h-4 w-4" /> {t("schedule")}
-            </Link>
-            <Link href="/admin/tours" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/tours") ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
-              <Ticket className="h-4 w-4" /> {t("tours_title")}
-            </Link>
-            <Link href="/admin/bookings" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/bookings") ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
-              <Ticket className="h-4 w-4" /> {t("bookings")}
-            </Link>
-            <Link href="/admin/checkin" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/checkin") ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
-              <QrCode className="h-4 w-4" /> {t("checkin_title")}
-            </Link>
-            <Link href="/admin/companies" className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive("/admin/companies") ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
-              <Building2 className="h-4 w-4" /> {t("companies")}
-            </Link>
-            <Link href="/admin/settings" className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground text-muted-foreground">
-              <Settings className="h-4 w-4" /> {t("settings")}
-            </Link>
+            {items.map((item) => (
+              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive(item.href) ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
+                <item.icon className="h-4 w-4" /> {t(item.labelKey)}
+              </Link>
+            ))}
           </nav>
         </aside>
         <main className="flex-1 py-4 md:py-8 md:pl-8 overflow-hidden">{children}</main>

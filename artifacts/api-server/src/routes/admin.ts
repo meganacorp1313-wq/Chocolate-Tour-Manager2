@@ -14,6 +14,7 @@ import {
   companiesTable,
   companyPricesTable,
   settingsTable,
+  staffUsersTable,
 } from "@workspace/db";
 import {
   AdminLoginBody,
@@ -65,6 +66,14 @@ import {
   ResendBookingEmailsResponse,
   CheckInBookingParams,
   CheckInBookingResponse,
+  ListStaffResponse,
+  CreateStaffBody,
+  CreateStaffResponse,
+  UpdateStaffParams,
+  UpdateStaffBody,
+  UpdateStaffResponse,
+  DeleteStaffParams,
+  DeleteStaffResponse,
 } from "@workspace/api-zod";
 import {
   readSession,
@@ -121,13 +130,52 @@ async function checkAdminPassword(password: string): Promise<boolean> {
   return true;
 }
 
-function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+type AdminRole = "admin" | "manager" | "staff";
+
+/**
+ * Resolve the current access level. For staff sessions the staff row is
+ * re-read on every request so that deactivation, deletion, or a role change
+ * takes effect immediately (not when the 30-day cookie expires).
+ */
+async function sessionRole(
+  req: Request,
+): Promise<{ role: AdminRole; name: string | null } | null> {
   const session = readSession(req, ADMIN_COOKIE);
-  if (session?.role !== "admin") {
-    res.status(401).json({ error: "Не авторизованы" });
-    return;
-  }
-  next();
+  if (session?.role !== "admin") return null;
+  if (session.staffId === undefined) return { role: "admin", name: null }; // owner
+  const [user] = await db
+    .select()
+    .from(staffUsersTable)
+    .where(eq(staffUsersTable.id, session.staffId));
+  if (!user || !user.active) return null;
+  return { role: user.role, name: user.name };
+}
+
+// Any authenticated admin-panel user (admin, manager, or staff)
+function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+  void sessionRole(req).then((resolved) => {
+    if (!resolved) {
+      res.status(401).json({ error: "Не авторизованы" });
+      return;
+    }
+    next();
+  }, next);
+}
+
+function requireRole(...roles: AdminRole[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    void sessionRole(req).then((resolved) => {
+      if (!resolved) {
+        res.status(401).json({ error: "Не авторизованы" });
+        return;
+      }
+      if (!roles.includes(resolved.role)) {
+        res.status(403).json({ error: "Недостаточно прав" });
+        return;
+      }
+      next();
+    }, next);
+  };
 }
 
 router.post("/admin/login", async (req, res): Promise<void> => {
@@ -136,6 +184,30 @@ router.post("/admin/login", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const username = parsed.data.username?.trim();
+  if (username) {
+    // Staff login by username + password
+    const [user] = await db
+      .select()
+      .from(staffUsersTable)
+      .where(eq(staffUsersTable.username, username.toLowerCase()));
+    if (
+      !user ||
+      !user.active ||
+      !(await verifyPassword(parsed.data.password, user.passwordHash))
+    ) {
+      res.status(401).json({ error: "Неверный пароль" });
+      return;
+    }
+    setSession(res, ADMIN_COOKIE, {
+      role: "admin",
+      staffId: user.id,
+      adminRole: user.role,
+    });
+    res.json(AdminLoginResponse.parse({ ok: true }));
+    return;
+  }
+  // Owner login by master password
   if (!(await checkAdminPassword(parsed.data.password))) {
     res.status(401).json({ error: "Неверный пароль" });
     return;
@@ -149,11 +221,111 @@ router.post("/admin/logout", async (_req, res): Promise<void> => {
   res.json(AdminLogoutResponse.parse({ ok: true }));
 });
 
-router.get("/admin/me", requireAdmin, async (_req, res): Promise<void> => {
-  res.json(GetAdminSessionResponse.parse({ ok: true }));
+router.get("/admin/me", async (req, res): Promise<void> => {
+  const resolved = await sessionRole(req);
+  if (!resolved) {
+    res.status(401).json({ error: "Не авторизованы" });
+    return;
+  }
+  res.json(
+    GetAdminSessionResponse.parse({ ok: true, role: resolved.role, name: resolved.name }),
+  );
 });
 
-router.get("/admin/summary", requireAdmin, async (_req, res): Promise<void> => {
+// ---- Staff management (admin only) ----
+
+const toStaffView = (u: typeof staffUsersTable.$inferSelect) => ({
+  id: u.id,
+  name: u.name,
+  username: u.username,
+  role: u.role,
+  active: u.active,
+  createdAt: u.createdAt.toISOString(),
+});
+
+router.get("/admin/staff", requireRole("admin"), async (_req, res): Promise<void> => {
+  const rows = await db.select().from(staffUsersTable).orderBy(staffUsersTable.id);
+  res.json(ListStaffResponse.parse(rows.map(toStaffView)));
+});
+
+router.post("/admin/staff", requireRole("admin"), async (req, res): Promise<void> => {
+  const parsed = CreateStaffBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Некорректные данные" });
+    return;
+  }
+  const username = parsed.data.username.trim().toLowerCase();
+  const [existing] = await db
+    .select({ id: staffUsersTable.id })
+    .from(staffUsersTable)
+    .where(eq(staffUsersTable.username, username));
+  if (existing) {
+    res.status(409).json({ error: "Логин уже занят" });
+    return;
+  }
+  const [created] = await db
+    .insert(staffUsersTable)
+    .values({
+      name: parsed.data.name.trim(),
+      username,
+      passwordHash: await hashPassword(parsed.data.password),
+      role: parsed.data.role,
+    })
+    .returning();
+  res.json(CreateStaffResponse.parse(toStaffView(created!)));
+});
+
+router.patch(
+  "/admin/staff/:id",
+  requireRole("admin"),
+  async (req, res): Promise<void> => {
+    const params = UpdateStaffParams.safeParse(req.params);
+    const body = UpdateStaffBody.safeParse(req.body);
+    if (!params.success || !body.success) {
+      res.status(400).json({ error: "Некорректные данные" });
+      return;
+    }
+    const patch: Partial<typeof staffUsersTable.$inferInsert> = {};
+    if (body.data.name !== undefined) patch.name = body.data.name.trim();
+    if (body.data.role !== undefined) patch.role = body.data.role;
+    if (body.data.active !== undefined) patch.active = body.data.active;
+    if (body.data.password !== undefined)
+      patch.passwordHash = await hashPassword(body.data.password);
+    const [updated] = await db
+      .update(staffUsersTable)
+      .set(patch)
+      .where(eq(staffUsersTable.id, params.data.id))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ error: "Сотрудник не найден" });
+      return;
+    }
+    res.json(UpdateStaffResponse.parse(toStaffView(updated)));
+  },
+);
+
+router.delete(
+  "/admin/staff/:id",
+  requireRole("admin"),
+  async (req, res): Promise<void> => {
+    const params = DeleteStaffParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: "Некорректные данные" });
+      return;
+    }
+    const deleted = await db
+      .delete(staffUsersTable)
+      .where(eq(staffUsersTable.id, params.data.id))
+      .returning({ id: staffUsersTable.id });
+    if (deleted.length === 0) {
+      res.status(404).json({ error: "Сотрудник не найден" });
+      return;
+    }
+    res.json(DeleteStaffResponse.parse({ ok: true }));
+  },
+);
+
+router.get("/admin/summary", requireRole("admin", "manager"), async (_req, res): Promise<void> => {
   const today = new Date().toISOString().slice(0, 10);
   const monthStart = today.slice(0, 7) + "-01";
   const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
@@ -201,7 +373,7 @@ router.get("/admin/summary", requireAdmin, async (_req, res): Promise<void> => {
   );
 });
 
-router.post("/admin/password", requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/password", requireRole("admin"), async (req, res): Promise<void> => {
   const parsed = ChangeAdminPasswordBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Новый пароль должен быть не короче 6 символов" });
@@ -224,7 +396,7 @@ router.get("/admin/tours", requireAdmin, async (_req, res): Promise<void> => {
   );
 });
 
-router.post("/admin/tours", requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/tours", requireRole("admin"), async (req, res): Promise<void> => {
   const parsed = CreateTourBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -248,7 +420,7 @@ router.post("/admin/tours", requireAdmin, async (req, res): Promise<void> => {
   res.status(201).json(CreateTourResponse.parse({ ...tour!, companyPrice: null }));
 });
 
-router.patch("/admin/tours/:id", requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/tours/:id", requireRole("admin"), async (req, res): Promise<void> => {
   const params = UpdateTourParams.safeParse(req.params);
   const body = UpdateTourBody.safeParse(req.body);
   if (!params.success || !body.success) {
@@ -267,7 +439,7 @@ router.patch("/admin/tours/:id", requireAdmin, async (req, res): Promise<void> =
   res.json(UpdateTourResponse.parse({ ...tour, companyPrice: null }));
 });
 
-router.delete("/admin/tours/:id", requireAdmin, async (req, res): Promise<void> => {
+router.delete("/admin/tours/:id", requireRole("admin"), async (req, res): Promise<void> => {
   const params = DeleteTourParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: "Некорректный id" });
@@ -314,7 +486,7 @@ async function slotViews(slotIds?: { from: string; to: string }) {
     );
 }
 
-router.get("/admin/slots", requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/slots", requireRole("admin", "manager"), async (req, res): Promise<void> => {
   const parsed = AdminListSlotsQueryParams.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -327,7 +499,7 @@ router.get("/admin/slots", requireAdmin, async (req, res): Promise<void> => {
   );
 });
 
-router.post("/admin/slots", requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/slots", requireRole("admin", "manager"), async (req, res): Promise<void> => {
   const parsed = CreateSlotBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -367,7 +539,7 @@ router.post("/admin/slots", requireAdmin, async (req, res): Promise<void> => {
   );
 });
 
-router.post("/admin/slots/bulk", requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/slots/bulk", requireRole("admin", "manager"), async (req, res): Promise<void> => {
   const parsed = CreateSlotsBulkBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -410,7 +582,7 @@ router.post("/admin/slots/bulk", requireAdmin, async (req, res): Promise<void> =
   res.status(201).json(CreateSlotsBulkResponse.parse({ created: values.length }));
 });
 
-router.patch("/admin/slots/:id", requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/slots/:id", requireRole("admin", "manager"), async (req, res): Promise<void> => {
   const params = UpdateSlotParams.safeParse(req.params);
   const body = UpdateSlotBody.safeParse(req.body);
   if (!params.success || !body.success) {
@@ -449,7 +621,7 @@ router.patch("/admin/slots/:id", requireAdmin, async (req, res): Promise<void> =
   );
 });
 
-router.delete("/admin/slots/:id", requireAdmin, async (req, res): Promise<void> => {
+router.delete("/admin/slots/:id", requireRole("admin", "manager"), async (req, res): Promise<void> => {
   const params = DeleteSlotParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: "Некорректный id" });
@@ -476,7 +648,7 @@ router.delete("/admin/slots/:id", requireAdmin, async (req, res): Promise<void> 
 
 // ---- Companies ----
 
-router.get("/admin/companies", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/companies", requireRole("admin"), async (_req, res): Promise<void> => {
   const companies = await db
     .select()
     .from(companiesTable)
@@ -488,7 +660,7 @@ router.get("/admin/companies", requireAdmin, async (_req, res): Promise<void> =>
   );
 });
 
-router.post("/admin/companies", requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/companies", requireRole("admin"), async (req, res): Promise<void> => {
   const parsed = CreateCompanyBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -521,7 +693,7 @@ router.post("/admin/companies", requireAdmin, async (req, res): Promise<void> =>
 
 router.patch(
   "/admin/companies/:id",
-  requireAdmin,
+  requireRole("admin"),
   async (req, res): Promise<void> => {
     const params = UpdateCompanyParams.safeParse(req.params);
     const body = UpdateCompanyBody.safeParse(req.body);
@@ -561,7 +733,7 @@ router.patch(
 
 router.delete(
   "/admin/companies/:id",
-  requireAdmin,
+  requireRole("admin"),
   async (req, res): Promise<void> => {
     const params = DeleteCompanyParams.safeParse(req.params);
     if (!params.success) {
@@ -575,7 +747,7 @@ router.delete(
 
 router.get(
   "/admin/companies/:id/prices",
-  requireAdmin,
+  requireRole("admin"),
   async (req, res): Promise<void> => {
     const params = GetCompanyPriceListParams.safeParse(req.params);
     if (!params.success) {
@@ -607,7 +779,7 @@ router.get(
 
 router.put(
   "/admin/companies/:id/prices",
-  requireAdmin,
+  requireRole("admin"),
   async (req, res): Promise<void> => {
     const params = SetCompanyPriceListParams.safeParse(req.params);
     const body = SetCompanyPriceListBody.safeParse(req.body);
@@ -675,7 +847,7 @@ router.get("/admin/bookings", requireAdmin, async (req, res): Promise<void> => {
 
 router.patch(
   "/admin/bookings/:id",
-  requireAdmin,
+  requireRole("admin", "manager"),
   async (req, res): Promise<void> => {
     const params = UpdateBookingStatusParams.safeParse(req.params);
     const body = UpdateBookingStatusBody.safeParse(req.body);
@@ -700,7 +872,7 @@ router.patch(
 // Re-send confirmation emails for a booking and record the outcome
 router.post(
   "/admin/bookings/:id/resend-email",
-  requireAdmin,
+  requireRole("admin", "manager"),
   async (req, res): Promise<void> => {
     const params = ResendBookingEmailsParams.safeParse(req.params);
     if (!params.success) {
@@ -758,7 +930,7 @@ router.post(
 );
 
 // Expire unpaid bookings past their payment window
-router.post("/admin/bookings/expire", requireAdmin, async (_req, res): Promise<void> => {
+router.post("/admin/bookings/expire", requireRole("admin", "manager"), async (_req, res): Promise<void> => {
   const cancelled = await expireStaleBookings();
   void retryFailedBookingEmails();
   res.json(ExpireUnpaidBookingsResponse.parse({ cancelled }));

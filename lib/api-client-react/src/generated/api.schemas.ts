@@ -289,6 +289,8 @@ export interface CompanyLoginInput {
 export interface AdminLoginInput {
   /** @minLength 1 */
   password: string;
+  /** @nullable */
+  username?: string | null;
 }
 
 export interface AdminPasswordChangeInput {
@@ -296,6 +298,80 @@ export interface AdminPasswordChangeInput {
   currentPassword: string;
   /** @minLength 6 */
   newPassword: string;
+}
+
+export type AdminSessionInfoRole = typeof AdminSessionInfoRole[keyof typeof AdminSessionInfoRole];
+
+
+export const AdminSessionInfoRole = {
+  admin: 'admin',
+  manager: 'manager',
+  staff: 'staff',
+} as const;
+
+export interface AdminSessionInfo {
+  ok: boolean;
+  role: AdminSessionInfoRole;
+  /**
+     * Staff display name; null for the owner
+     * @nullable
+     */
+  name: string | null;
+}
+
+export type StaffUserRole = typeof StaffUserRole[keyof typeof StaffUserRole];
+
+
+export const StaffUserRole = {
+  admin: 'admin',
+  manager: 'manager',
+  staff: 'staff',
+} as const;
+
+export interface StaffUser {
+  id: number;
+  name: string;
+  username: string;
+  role: StaffUserRole;
+  active: boolean;
+  createdAt: string;
+}
+
+export type StaffInputRole = typeof StaffInputRole[keyof typeof StaffInputRole];
+
+
+export const StaffInputRole = {
+  admin: 'admin',
+  manager: 'manager',
+  staff: 'staff',
+} as const;
+
+export interface StaffInput {
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 3 */
+  username: string;
+  /** @minLength 6 */
+  password: string;
+  role: StaffInputRole;
+}
+
+export type StaffUpdateRole = typeof StaffUpdateRole[keyof typeof StaffUpdateRole];
+
+
+export const StaffUpdateRole = {
+  admin: 'admin',
+  manager: 'manager',
+  staff: 'staff',
+} as const;
+
+export interface StaffUpdate {
+  /** @minLength 1 */
+  name?: string;
+  /** @minLength 6 */
+  password?: string;
+  role?: StaffUpdateRole;
+  active?: boolean;
 }
 
 export interface CompanySession {
