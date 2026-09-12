@@ -19,7 +19,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: install gg
-        run: go install github.com/gagarin-cloud/gg@latest
+        run: |
+          go install github.com/gagarin-cloud/gg@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: log docker in to the gagarin registry
         run: gg registry login
