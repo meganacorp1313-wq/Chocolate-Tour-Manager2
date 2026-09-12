@@ -83,7 +83,11 @@ router.get("/availability", async (req, res): Promise<void> => {
   }
   const month = parsed.data.month;
   const from = `${month}-01`;
-  const to = `${month}-31`;
+  // Postgres rejects a date that does not exist, so a fixed -31 makes every
+  // shorter month fail rather than return an empty range.
+  const [year, monthIndex] = month.split("-").map(Number) as [number, number];
+  const lastDay = new Date(Date.UTC(year, monthIndex, 0)).getUTCDate();
+  const to = `${month}-${lastDay}`;
 
   // Clean up expired pending bookings lazily; retry failed emails in background
   await expireStaleBookings();
