@@ -1,3 +1,4 @@
+import path from "node:path";
 import express, { type Express } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -51,5 +52,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+// Single-origin deployments (gagarin) serve the built frontend from this same
+// process, so session cookies and relative /api calls keep working.
+const staticDir = process.env.STATIC_DIR;
+
+if (staticDir) {
+  app.use(express.static(staticDir));
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api")) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(staticDir, "index.html"));
+  });
+}
 
 export default app;

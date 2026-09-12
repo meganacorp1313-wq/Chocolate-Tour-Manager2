@@ -1,0 +1,11 @@
+FROM node:24-bookworm-slim
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@10.20.0 --activate
+
+COPY . .
+
+RUN pnpm install --frozen-lockfile
+
+CMD ["pnpm", "--filter", "@workspace/db", "run", "push"]
