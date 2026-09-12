@@ -1,0 +1,44 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-choco-tours
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      GAGARIN_TOKEN: ${{ secrets.GAGARIN_TOKEN }}
+      PROJECT: choco-tours
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install gg
+        run: go install github.com/gagarin-cloud/gg@latest
+
+      - name: log docker in to the gagarin registry
+        run: gg registry login
+
+      - name: build and publish
+        run: |
+          gg build "$PROJECT/web:${{ github.sha }}" --push
+          gg build "$PROJECT/migrate:${{ github.sha }}" --file Dockerfile.migrate --push
+
+      # drizzle-kit push applies the schema diff unattended, so take a snapshot
+      # first: the platform's own backups are only nightly.
+      - name: back up the database
+        run: gg resource backup "$PROJECT/db"
+
+      - name: apply the schema
+        run: gg run "$PROJECT/migrate" "migrate:${{ github.sha }}" --deps db
+
+      - name: release
+        run: gg deploy "$PROJECT/web:8080" "web:${{ github.sha }}" --env-file .env.production
+
+      - name: report
+        run: gg status "$PROJECT"
