@@ -300,6 +300,13 @@ export interface AdminPasswordChangeInput {
   newPassword: string;
 }
 
+export interface AdminPasswordResetInput {
+  /** @minLength 1 */
+  token: string;
+  /** @minLength 6 */
+  newPassword: string;
+}
+
 export type AdminSessionInfoRole = typeof AdminSessionInfoRole[keyof typeof AdminSessionInfoRole];
 
 

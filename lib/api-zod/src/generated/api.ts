@@ -743,6 +743,33 @@ export const ChangeAdminPasswordResponse = zod.object({
 
 
 /**
+ * Always reports success so the endpoint cannot be used to probe whether the site has an owner address configured or how often it is used.
+ * @summary Email a password reset link to the configured owner address
+ */
+export const RequestAdminPasswordResetResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Set a new admin password using a token from the reset email
+ */
+
+export const confirmAdminPasswordResetBodyNewPasswordMin = 6;
+
+
+
+export const ConfirmAdminPasswordResetBody = zod.object({
+  "token": zod.string().min(1),
+  "newPassword": zod.string().min(confirmAdminPasswordResetBodyNewPasswordMin)
+})
+
+export const ConfirmAdminPasswordResetResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary List bookings (optionally filter by date range)
  */
 export const AdminListBookingsQueryParams = zod.object({

@@ -5,7 +5,8 @@ import {
   type Response,
   type NextFunction,
 } from "express";
-import { and, eq, gte, lte, count, isNull } from "drizzle-orm";
+import { createHash, randomBytes } from "node:crypto";
+import { and, eq, gt, gte, lte, count, isNull, desc } from "drizzle-orm";
 import {
   db,
   toursTable,
@@ -15,6 +16,7 @@ import {
   companyPricesTable,
   settingsTable,
   staffUsersTable,
+  passwordResetsTable,
 } from "@workspace/db";
 import {
   AdminLoginBody,
@@ -61,6 +63,9 @@ import {
   UpdateBookingStatusResponse,
   ChangeAdminPasswordBody,
   ChangeAdminPasswordResponse,
+  RequestAdminPasswordResetResponse,
+  ConfirmAdminPasswordResetBody,
+  ConfirmAdminPasswordResetResponse,
   ExpireUnpaidBookingsResponse,
   ResendBookingEmailsParams,
   ResendBookingEmailsResponse,
@@ -89,6 +94,8 @@ import {
   retryFailedBookingEmails,
 } from "../lib/bookings";
 import { hashPassword, verifyPassword, isHashedPassword } from "../lib/password";
+import { sendPasswordResetEmail } from "../lib/email";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -385,6 +392,103 @@ router.post("/admin/password", requireRole("admin"), async (req, res): Promise<v
   }
   await setAdminPassword(parsed.data.newPassword);
   res.json(ChangeAdminPasswordResponse.parse({ ok: true }));
+});
+
+// ---- Password reset by email ----
+
+const RESET_TTL_MINUTES = 30;
+/** Refuse to send a second link while a fresh one is still on its way. */
+const RESET_MIN_INTERVAL_MS = 2 * 60 * 1000;
+
+const hashToken = (token: string): string =>
+  createHash("sha256").update(token).digest("hex");
+
+async function issuePasswordReset(): Promise<void> {
+  const ownerEmail = process.env.OWNER_EMAIL;
+  const baseUrl = process.env.PUBLIC_BASE_URL;
+
+  if (!ownerEmail || !baseUrl) {
+    logger.error(
+      "Password reset requested but OWNER_EMAIL or PUBLIC_BASE_URL is not set",
+    );
+    return;
+  }
+
+  const [recent] = await db
+    .select()
+    .from(passwordResetsTable)
+    .where(
+      and(
+        isNull(passwordResetsTable.usedAt),
+        gt(passwordResetsTable.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(desc(passwordResetsTable.createdAt))
+    .limit(1);
+
+  if (
+    recent &&
+    Date.now() - recent.createdAt.getTime() < RESET_MIN_INTERVAL_MS
+  ) {
+    logger.info("Password reset throttled: a recent link is still valid");
+    return;
+  }
+
+  const token = randomBytes(32).toString("base64url");
+  await db.insert(passwordResetsTable).values({
+    tokenHash: hashToken(token),
+    expiresAt: new Date(Date.now() + RESET_TTL_MINUTES * 60 * 1000),
+  });
+
+  await sendPasswordResetEmail({
+    to: ownerEmail,
+    link: `${baseUrl.replace(/\/+$/, "")}/admin/reset/${token}`,
+    validMinutes: RESET_TTL_MINUTES,
+  });
+}
+
+router.post("/admin/password-reset", async (_req, res): Promise<void> => {
+  // The answer is deliberately the same whether or not a link went out.
+  try {
+    await issuePasswordReset();
+  } catch (err) {
+    logger.error({ err }, "Failed to send password reset email");
+  }
+  res.json(RequestAdminPasswordResetResponse.parse({ ok: true }));
+});
+
+router.post("/admin/password-reset/confirm", async (req, res): Promise<void> => {
+  const parsed = ConfirmAdminPasswordResetBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Новый пароль должен быть не короче 6 символов" });
+    return;
+  }
+
+  const [row] = await db
+    .select()
+    .from(passwordResetsTable)
+    .where(
+      and(
+        eq(passwordResetsTable.tokenHash, hashToken(parsed.data.token)),
+        isNull(passwordResetsTable.usedAt),
+        gt(passwordResetsTable.expiresAt, new Date()),
+      ),
+    );
+
+  if (!row) {
+    res.status(401).json({ error: "Ссылка недействительна или устарела" });
+    return;
+  }
+
+  await setAdminPassword(parsed.data.newPassword);
+  // Spend every outstanding link, not just this one: the password they open
+  // the door with has changed, so older links must not still work.
+  await db
+    .update(passwordResetsTable)
+    .set({ usedAt: new Date() })
+    .where(isNull(passwordResetsTable.usedAt));
+
+  res.json(ConfirmAdminPasswordResetResponse.parse({ ok: true }));
 });
 
 // ---- Tours ----

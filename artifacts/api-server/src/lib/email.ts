@@ -240,6 +240,34 @@ async function sendEmail(opts: {
   }
 }
 
+/**
+ * Send the admin password reset link. Unlike booking mail this is not
+ * retried in the background: a reset is short-lived, and the owner can ask
+ * for another one.
+ */
+export async function sendPasswordResetEmail(opts: {
+  to: string;
+  link: string;
+  validMinutes: number;
+}): Promise<void> {
+  const link = esc(opts.link);
+  await sendEmail({
+    to: opts.to,
+    subject: "Восстановление доступа в админ-панель",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; color: #2b2118;">
+        <h2 style="color: #5b3a21;">Восстановление доступа</h2>
+        <p>Кто-то запросил смену пароля администратора. Чтобы задать новый пароль, откройте ссылку:</p>
+        <p><a href="${link}" style="color: #5b3a21;">${link}</a></p>
+        <p>Ссылка действует ${opts.validMinutes} минут и срабатывает один раз.</p>
+        <p style="color: #7a6a5b; font-size: 13px;">
+          Если вы этого не запрашивали — просто удалите письмо, пароль останется прежним.
+        </p>
+      </div>
+    `,
+  });
+}
+
 export interface EmailSendResult {
   /** true when every attempted email was delivered to Resend successfully */
   ok: boolean;

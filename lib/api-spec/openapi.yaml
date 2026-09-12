@@ -694,6 +694,51 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorMessage"
+  /admin/password-reset:
+    post:
+      operationId: requestAdminPasswordReset
+      tags: [admin]
+      summary: Email a password reset link to the configured owner address
+      description: >
+        Always reports success so the endpoint cannot be used to probe whether
+        the site has an owner address configured or how often it is used.
+      responses:
+        "200":
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+  /admin/password-reset/confirm:
+    post:
+      operationId: confirmAdminPasswordReset
+      tags: [admin]
+      summary: Set a new admin password using a token from the reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminPasswordResetInput"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkStatus"
+        "400":
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "401":
+          description: Token is unknown, already used, or expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
   /admin/bookings:
     get:
       operationId: adminListBookings
@@ -995,6 +1040,12 @@ components:
       required: [currentPassword, newPassword]
       properties:
         currentPassword: { type: string, minLength: 1 }
+        newPassword: { type: string, minLength: 6 }
+    AdminPasswordResetInput:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token: { type: string, minLength: 1 }
         newPassword: { type: string, minLength: 6 }
     AdminSessionInfo:
       type: object

@@ -1,12 +1,12 @@
 import { useState } from "react"
-import { useAdminLogin, useGetAdminSession, getGetAdminSessionQueryKey } from "@workspace/api-client-react"
+import { useAdminLogin, useGetAdminSession, getGetAdminSessionQueryKey, useRequestAdminPasswordReset } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { AdminLayout } from "@/components/layout/AdminLayout"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Loader2, Lock } from "lucide-react"
-import { Switch, Route, Redirect } from "wouter"
+import { Switch, Route, Redirect, useRoute } from "wouter"
 import { useI18n } from "@/lib/i18n"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
@@ -19,12 +19,15 @@ import AdminBookings from "./AdminBookings"
 import AdminCheckIn from "./AdminCheckIn"
 import AdminSettings from "./AdminSettings"
 import AdminStaff from "./AdminStaff"
+import AdminPasswordReset from "./AdminPasswordReset"
 
 function AdminLogin() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [resetSent, setResetSent] = useState(false)
   const login = useAdminLogin()
+  const requestReset = useRequestAdminPasswordReset()
   const queryClient = useQueryClient()
   const { t } = useI18n()
 
@@ -81,6 +84,22 @@ function AdminLogin() {
                 {t("enter")}
               </Button>
             </form>
+            <div className="pt-4 text-center">
+              {resetSent ? (
+                <p className="text-sm text-muted-foreground">{t("reset_email_sent")}</p>
+              ) : (
+                <button
+                  type="button"
+                  className="text-sm text-muted-foreground underline underline-offset-4 hover:text-primary disabled:opacity-50"
+                  disabled={requestReset.isPending}
+                  onClick={() =>
+                    requestReset.mutate(undefined, { onSuccess: () => setResetSent(true) })
+                  }
+                >
+                  {t("forgot_password")}
+                </button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -89,9 +108,15 @@ function AdminLogin() {
 }
 
 export default function AdminApp() {
+  const [isReset, resetParams] = useRoute("/admin/reset/:token")
   const { data: session, isLoading, isError } = useGetAdminSession({
     query: { retry: false, queryKey: getGetAdminSessionQueryKey() }
   })
+
+  // Reachable without a session — the whole point is that the password is lost.
+  if (isReset && resetParams?.token) {
+    return <AdminPasswordReset token={resetParams.token} />
+  }
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>

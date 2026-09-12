@@ -4,3 +4,4 @@ export * from "./companies";
 export * from "./bookings";
 export * from "./settings";
 export * from "./staff";
+export * from "./passwordResets";

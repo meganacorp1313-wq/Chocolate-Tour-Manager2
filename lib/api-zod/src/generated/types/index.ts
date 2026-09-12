@@ -10,6 +10,7 @@ export * from './adminListBookingsParams';
 export * from './adminListSlotsParams';
 export * from './adminLoginInput';
 export * from './adminPasswordChangeInput';
+export * from './adminPasswordResetInput';
 export * from './adminSessionInfo';
 export * from './adminSessionInfoRole';
 export * from './adminSummary';
